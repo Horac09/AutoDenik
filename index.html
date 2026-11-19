@@ -1,0 +1,2631 @@
+<!DOCTYPE html>
+<html lang="cs" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AutoDeník - Správa a Náklady Vozidla</title>
+    
+    <!-- PWA & Mobile Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AutoDeník">
+    <meta name="theme-color" content="#0f172a">
+    
+    <!-- Inline PWA Web Manifest -->
+    <link rel="manifest" href="data:application/manifest+json;utf8,%7B%22name%22%3A%22AutoDenik%22%2C%22short_name%22%3A%22AutoDenik%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f172a%22%2C%22theme_color%22%3A%22%230f172a%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fcdn-icons-png.flaticon.com%2F512%2F3202%2F3202003.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#ecfeff',
+                            100: '#cffafe',
+                            400: '#22d3ee',
+                            500: '#06b6d4',
+                            600: '#0891b2',
+                            700: '#0e7490',
+                            900: '#164e63',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(100, 116, 139, 0.5);
+            border-radius: 9999px;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .light .glass-panel {
+            background: rgba(255, 255, 255, 0.88);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+        .safe-bottom-padding {
+            padding-bottom: 6rem;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen transition-colors duration-200 light:bg-slate-100 light:text-slate-900 safe-bottom-padding">
+
+    <!-- Toast Notification Banner -->
+    <div id="toast" class="fixed top-4 right-4 z-50 transform translate-x-full transition-transform duration-300 max-w-sm w-full p-4 rounded-xl shadow-2xl flex items-center space-x-3 text-white pointer-events-none">
+        <i id="toastIcon" class="text-xl"></i>
+        <span id="toastMsg" class="text-sm font-semibold"></span>
+    </div>
+
+    <!-- MAIN APPLICATION CONTAINER -->
+    <div id="app" class="max-w-4xl mx-auto px-4 sm:px-6 pt-4">
+
+        <!-- HEADER & VEHICLE SWITCHER -->
+        <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pt-1">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/20">
+                        <i class="fa-solid fa-car-side text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">AutoDeník</h1>
+                        <p class="text-[11px] text-slate-400 font-medium">Správa auta, Servis & Pneumatiky</p>
+                    </div>
+                </div>
+                
+                <!-- Mobile Controls -->
+                <div class="flex items-center space-x-2 sm:hidden">
+                    <button onclick="toggleTheme()" class="p-2.5 rounded-xl bg-slate-800/90 text-slate-300 border border-slate-700/80">
+                        <i id="themeIconMobile" class="fa-solid fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Vehicle Selector & Action Buttons -->
+            <div class="flex items-center space-x-2">
+                <div class="relative flex-1 sm:w-64">
+                    <select id="vehicleSelect" onchange="switchVehicle(this.value)" class="w-full bg-slate-800/90 text-slate-100 text-xs font-semibold rounded-xl border border-slate-700/80 px-3.5 py-2.5 pr-8 focus:ring-2 focus:ring-cyan-500 outline-none cursor-pointer appearance-none">
+                        <!-- Populated dynamically -->
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none"></i>
+                </div>
+                
+                <button onclick="openModal('vehicleModal')" title="Správa vozidel" class="p-2.5 rounded-xl bg-slate-800/90 text-slate-300 hover:text-white border border-slate-700/80 transition flex items-center space-x-1">
+                    <i class="fa-solid fa-plus text-xs text-cyan-400"></i>
+                    <i class="fa-solid fa-car-tunnel"></i>
+                </button>
+
+                <button onclick="toggleTheme()" class="hidden sm:block p-2.5 rounded-xl bg-slate-800/90 text-slate-300 hover:text-white border border-slate-700/80 transition">
+                    <i id="themeIconDesktop" class="fa-solid fa-moon"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- DESKTOP NAVIGATION TABS -->
+        <nav class="hidden md:flex items-center space-x-1 p-1.5 rounded-2xl bg-slate-900/80 border border-slate-800 mb-6">
+            <button onclick="switchTab('dashboard')" id="dtab-dashboard" class="tab-btn-d flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-gauge-high"></i>
+                <span>Přehled</span>
+            </button>
+            <button onclick="switchTab('fuel')" id="dtab-fuel" class="tab-btn-d flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-gas-pump"></i>
+                <span>Tankování</span>
+            </button>
+            <button onclick="switchTab('service')" id="dtab-service" class="tab-btn-d flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-wrench"></i>
+                <span>Servis</span>
+            </button>
+            <button onclick="switchTab('tires')" id="dtab-tires" class="tab-btn-d flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-compact-disc"></i>
+                <span>Pneumatiky</span>
+            </button>
+            <button onclick="switchTab('analytics')" id="dtab-analytics" class="tab-btn-d flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Data & Grafy</span>
+            </button>
+        </nav>
+
+
+        <!-- ================= PAGE 1: PŘEHLED (DASHBOARD) ================= -->
+        <div id="page-dashboard" class="page-content space-y-5">
+            
+            <!-- Vehicle Info Card Header -->
+            <div class="p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-800 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex items-center space-x-4">
+                    <div class="p-3.5 rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                        <i class="fa-solid fa-car text-2xl"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <h2 id="bannerCarName" class="text-lg font-extrabold text-white">Škoda Superb Combi</h2>
+                            <span id="bannerCarPlate" class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-slate-700/80 text-amber-400 border border-slate-600">5P2 9012</span>
+                        </div>
+                        <p id="bannerCarMeta" class="text-xs text-slate-400 mt-0.5">Rok: 2021 • Počáteční stav: 120 000 km</p>
+                    </div>
+                </div>
+                <button onclick="openOdometerModal()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700 transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-pen text-cyan-400"></i>
+                    <span>Zapsat stav km</span>
+                </button>
+            </div>
+
+            <!-- Key Metrics Grid -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <div class="glass-panel p-4 rounded-2xl border border-slate-800">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-medium text-slate-400">Tachometr</span>
+                        <div class="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center">
+                            <i class="fa-solid fa-tachograph-digital text-xs"></i>
+                        </div>
+                    </div>
+                    <div class="flex items-baseline space-x-1">
+                        <span id="statOdometer" class="text-xl sm:text-2xl font-extrabold text-white">0</span>
+                        <span class="text-xs text-slate-400">km</span>
+                    </div>
+                    <div class="mt-1.5 text-[11px] text-slate-400">Sledováno: <strong id="statTrackedKm" class="text-slate-300">0 km</strong></div>
+                </div>
+
+                <div class="glass-panel p-4 rounded-2xl border border-slate-800">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-medium text-slate-400">Celkem výdaje</span>
+                        <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                            <i class="fa-solid fa-wallet text-xs"></i>
+                        </div>
+                    </div>
+                    <div class="flex items-baseline space-x-1">
+                        <span id="statTotalSpent" class="text-xl sm:text-2xl font-extrabold text-white">0</span>
+                        <span class="text-xs text-slate-400">Kč</span>
+                    </div>
+                    <div class="mt-1.5 text-[11px] text-slate-400">Palivo + Servis + Pneu</div>
+                </div>
+
+                <div class="glass-panel p-4 rounded-2xl border border-slate-800">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-medium text-slate-400">Prům. Spotřeba</span>
+                        <div class="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
+                            <i class="fa-solid fa-fire text-xs"></i>
+                        </div>
+                    </div>
+                    <div class="flex items-baseline space-x-1">
+                        <span id="statAvgConsumption" class="text-xl sm:text-2xl font-extrabold text-white">0.0</span>
+                        <span class="text-xs text-slate-400">l/100km</span>
+                    </div>
+                    <div class="mt-1.5 text-[11px] text-slate-400">Z plných nádrží</div>
+                </div>
+
+                <div class="glass-panel p-4 rounded-2xl border border-slate-800">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-medium text-slate-400">Náklad / 1 km</span>
+                        <div class="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center">
+                            <i class="fa-solid fa-calculator text-xs"></i>
+                        </div>
+                    </div>
+                    <div class="flex items-baseline space-x-1">
+                        <span id="statCostPerKm" class="text-xl sm:text-2xl font-extrabold text-white">0.00</span>
+                        <span class="text-xs text-slate-400">Kč/km</span>
+                    </div>
+                    <div class="mt-1.5 text-[11px] text-slate-400">Celkový průměr</div>
+                </div>
+            </div>
+
+            <!-- Quick Action Grid -->
+            <div class="grid grid-cols-3 gap-2.5">
+                <button onclick="openModal('fuelModal')" class="p-3.5 rounded-2xl bg-gradient-to-br from-cyan-600 to-cyan-700 text-white font-bold shadow-lg shadow-cyan-600/20 hover:brightness-110 active:scale-95 transition flex flex-col items-center justify-center space-y-1">
+                    <i class="fa-solid fa-gas-pump text-xl"></i>
+                    <span class="text-xs">+ Tankování</span>
+                </button>
+
+                <button onclick="openModal('templatesModal')" class="p-3.5 rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-700 text-white font-bold shadow-lg shadow-indigo-600/20 hover:brightness-110 active:scale-95 transition flex flex-col items-center justify-center space-y-1">
+                    <i class="fa-solid fa-list-check text-xl"></i>
+                    <span class="text-xs">Šablony servisu</span>
+                </button>
+
+                <button onclick="openModal('tireSwapModal')" class="p-3.5 rounded-2xl bg-gradient-to-br from-amber-600 to-amber-700 text-white font-bold shadow-lg shadow-amber-600/20 hover:brightness-110 active:scale-95 transition flex flex-col items-center justify-center space-y-1">
+                    <i class="fa-solid fa-compact-disc text-xl"></i>
+                    <span class="text-xs">Přezout pneu</span>
+                </button>
+            </div>
+
+            <!-- Dashboard Reminders Box -->
+            <div class="glass-panel p-5 rounded-2xl border border-slate-800 space-y-3">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-bell text-amber-400"></i>
+                        <h3 class="text-sm font-bold text-white">Nadcházející servis a kontroly</h3>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="openModal('templatesModal')" class="text-xs font-bold text-indigo-400 hover:underline">
+                            + Ze šablon
+                        </button>
+                        <span class="text-slate-600">•</span>
+                        <button onclick="openModal('reminderModal')" class="text-xs font-bold text-cyan-400 hover:underline">
+                            + Vlastní
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Banner if no reminders exist for car -->
+                <div id="noRemindersBanner" class="hidden p-4 rounded-xl bg-gradient-to-r from-indigo-950/80 to-slate-900 border border-indigo-500/30 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center flex-shrink-0">
+                            <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-white">Pro toto auto nemáte plán údržby</h4>
+                            <p class="text-[11px] text-slate-400">Vygenerujte doporučené servisní úkony (Olej, STK, Filtry, Brzdy, Rozvody) jedním kliknutím.</p>
+                        </div>
+                    </div>
+                    <button onclick="generateDefaultMaintenancePlanForActiveCar()" class="w-full sm:w-auto px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition whitespace-nowrap">
+                        <i class="fa-solid fa-plus-circle mr-1"></i> Vygenerovat plán
+                    </button>
+                </div>
+
+                <div id="dashboardRemindersList" class="space-y-2.5"></div>
+            </div>
+
+            <!-- Active Tire Widget & Activity Stream -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                <!-- Currently Mounted Tire Widget -->
+                <div class="glass-panel p-5 rounded-2xl border border-slate-800 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-compact-disc text-cyan-400"></i>
+                            <h3 class="text-sm font-bold text-white">Aktuálně obuté pneu</h3>
+                        </div>
+                        <span id="dashTireBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Není obuto</span>
+                    </div>
+                    <div id="dashTireContent" class="space-y-2 pt-1 text-xs text-slate-300"></div>
+                </div>
+
+                <!-- Recent Activity Feed -->
+                <div class="glass-panel p-5 rounded-2xl border border-slate-800 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-clock-rotate-left text-slate-400"></i>
+                            <span>Poslední aktivity</span>
+                        </h3>
+                    </div>
+                    <div id="dashRecentActivity" class="space-y-2 text-xs"></div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================= PAGE 2: TANKOVÁNÍ ================= -->
+        <div id="page-fuel" class="page-content space-y-5 hidden">
+            
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                    <h2 class="text-base font-bold text-white">Kniha Tankování</h2>
+                    <p class="text-xs text-slate-400">Přehled čerpání paliva a výpočet spotřeby</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="exportFuelCSV()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-file-excel text-emerald-400"></i>
+                        <span>Export CSV</span>
+                    </button>
+                    <button onclick="openModal('fuelModal')" class="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold shadow-lg shadow-cyan-600/20 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Zaznamenat</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Fuel Summary Badges -->
+            <div class="grid grid-cols-3 gap-2.5">
+                <div class="glass-panel p-3 rounded-2xl border border-slate-800 text-center">
+                    <span class="text-[10px] text-slate-400 font-medium block">Palivo celkem</span>
+                    <span id="fuelTotalLiters" class="text-base font-extrabold text-cyan-400">0 L</span>
+                </div>
+                <div class="glass-panel p-3 rounded-2xl border border-slate-800 text-center">
+                    <span class="text-[10px] text-slate-400 font-medium block">Výdaje celkem</span>
+                    <span id="fuelTotalCost" class="text-base font-extrabold text-emerald-400">0 Kč</span>
+                </div>
+                <div class="glass-panel p-3 rounded-2xl border border-slate-800 text-center">
+                    <span class="text-[10px] text-slate-400 font-medium block">Průměr Kč / L</span>
+                    <span id="fuelAvgPricePerLiter" class="text-base font-extrabold text-amber-400">0 Kč</span>
+                </div>
+            </div>
+
+            <!-- Fuel Logs Feed -->
+            <div id="fuelLogsContainer" class="space-y-3"></div>
+
+        </div>
+
+
+        <!-- ================= PAGE 3: SERVIS A ÚDRŽBA ================= -->
+        <div id="page-service" class="page-content space-y-5 hidden">
+            
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                    <h2 class="text-base font-bold text-white">Servis a Údržba</h2>
+                    <p class="text-xs text-slate-400">Záznamy oprav, výměn oleje, dílů, pneu a STK</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="openModal('templatesModal')" class="px-3 py-2 rounded-xl bg-indigo-900/60 hover:bg-indigo-800/80 text-indigo-300 text-xs font-semibold border border-indigo-700/50 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-list-check text-indigo-400"></i>
+                        <span>+ ze šablon</span>
+                    </button>
+                    <button onclick="exportServiceCSV()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-file-excel text-emerald-400"></i>
+                        <span>Export CSV</span>
+                    </button>
+                    <button onclick="openModal('serviceModal')" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/20 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>+ Servis</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Category Filter Buttons -->
+            <div class="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none">
+                <button onclick="filterServiceLogs('ALL')" class="svc-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-cyan-500 text-white whitespace-nowrap">Vše</button>
+                <button onclick="filterServiceLogs('Motorový olej')" class="svc-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap">Olej & Filtry</button>
+                <button onclick="filterServiceLogs('Brzdy')" class="svc-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap">Brzdy</button>
+                <button onclick="filterServiceLogs('Pneumatiky')" class="svc-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap">Pneumatiky</button>
+                <button onclick="filterServiceLogs('STK / Emise')" class="svc-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap">STK / Emise</button>
+                <button onclick="filterServiceLogs('Podvozek')" class="svc-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap">Podvozek</button>
+            </div>
+
+            <!-- Reminders Panel -->
+            <div class="glass-panel p-4 rounded-2xl border border-slate-800 space-y-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xs font-bold text-white flex items-center space-x-2">
+                        <i class="fa-solid fa-bell text-amber-400"></i>
+                        <span>Servisní intervaly a plánované úkony</span>
+                    </h3>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="openModal('templatesModal')" class="text-xs font-semibold text-indigo-400 hover:underline">+ Ze šablony</button>
+                        <span class="text-slate-600">•</span>
+                        <button onclick="openModal('reminderModal')" class="text-xs font-semibold text-cyan-400 hover:underline">+ Vlastní</button>
+                    </div>
+                </div>
+                <div id="serviceRemindersContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+            </div>
+
+            <!-- Service Log History Feed -->
+            <div class="space-y-3">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Historie oprav a servisu</h3>
+                <div id="serviceLogsContainer" class="space-y-3"></div>
+            </div>
+
+        </div>
+
+
+        <!-- ================= PAGE 4: SPRAVA PNEUMATIK (TIRES GARAGE) ================= -->
+        <div id="page-tires" class="page-content space-y-5 hidden">
+            
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                    <h2 class="text-base font-bold text-white">Garáž Pneumatik & Přezouvání</h2>
+                    <p class="text-xs text-slate-400">Rozměry, DOT, hloubka vzorku, opotřebení a nájezd na sadách</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="openModal('tireSetModal')" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-plus text-amber-400"></i>
+                        <span>Nová sada pneu</span>
+                    </button>
+                    <button onclick="openModal('tireSwapModal')" class="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold shadow-lg shadow-amber-600/20 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                        <span>Přezout auto</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tire Garage: List of all Tire Sets -->
+            <div class="space-y-3">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                    <span>Moje sady pneumatik v garáži</span>
+                </h3>
+                <div id="tireGarageContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3.5"></div>
+            </div>
+
+            <!-- Tire Swaps History -->
+            <div class="glass-panel p-5 rounded-2xl border border-slate-800 space-y-3">
+                <h3 class="text-xs font-bold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-history text-cyan-400"></i>
+                    <span>Historie přezouvání a náklady na pneu</span>
+                </h3>
+                <div id="tireSwapsHistoryContainer" class="space-y-2.5"></div>
+            </div>
+
+        </div>
+
+
+        <!-- ================= PAGE 5: ANALYTICS & BACKUP ================= -->
+        <div id="page-analytics" class="page-content space-y-5 hidden">
+            
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-base font-bold text-white">Grafy & Zálohování Dat</h2>
+                    <p class="text-xs text-slate-400">Analýza nákladů a správa databáze</p>
+                </div>
+                <button onclick="openModal('importExportModal')" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-database text-cyan-400"></i>
+                    <span>Záloha / JSON</span>
+                </button>
+            </div>
+
+            <!-- Dynamic Charts Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                <!-- Doughnut Chart: Expenses Breakdown -->
+                <div class="glass-panel p-4 rounded-2xl border border-slate-800 space-y-2">
+                    <h3 class="text-xs font-bold text-white flex items-center space-x-2">
+                        <i class="fa-solid fa-chart-pie text-cyan-400"></i>
+                        <span>Rozložení výdajů</span>
+                    </h3>
+                    <div class="h-52 relative flex items-center justify-center">
+                        <canvas id="expenseCategoryChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Bar Chart: Monthly Costs -->
+                <div class="glass-panel p-4 rounded-2xl border border-slate-800 space-y-2">
+                    <h3 class="text-xs font-bold text-white flex items-center space-x-2">
+                        <i class="fa-solid fa-chart-column text-emerald-400"></i>
+                        <span>Měsíční výdaje (Kč)</span>
+                    </h3>
+                    <div class="h-52 relative flex items-center justify-center">
+                        <canvas id="monthlyExpenseChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Detailed Cost Breakdown Table -->
+            <div class="glass-panel p-4 rounded-2xl border border-slate-800 space-y-3">
+                <h3 class="text-xs font-bold text-white">Jednotkové náklady vozidla</h3>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                    <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                        <span class="text-slate-400 block mb-1">Palivo / km</span>
+                        <span id="costFuelPerKm" class="text-base font-extrabold text-cyan-400">0.00 Kč</span>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                        <span class="text-slate-400 block mb-1">Servis / km</span>
+                        <span id="costServicePerKm" class="text-base font-extrabold text-indigo-400">0.00 Kč</span>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                        <span class="text-slate-400 block mb-1">Pneu / km</span>
+                        <span id="costTiresPerKm" class="text-base font-extrabold text-amber-400">0.00 Kč</span>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                        <span class="text-slate-400 block mb-1">Celkem / km</span>
+                        <span id="costTotalPerKm" class="text-base font-extrabold text-emerald-400">0.00 Kč</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo Data Box -->
+            <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div>
+                    <h4 class="text-xs font-bold text-white">Testovací demo data</h4>
+                    <p class="text-[11px] text-slate-400">Obnoví ukázkové záznamy a sady pneumatik pro otestování.</p>
+                </div>
+                <div class="flex items-center space-x-2 w-full sm:w-auto">
+                    <button onclick="loadDemoData()" class="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 text-xs font-bold transition">
+                        Načíst Demo
+                    </button>
+                    <button onclick="confirmResetData()" class="px-3.5 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-bold transition">
+                        Smazat vše
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- MOBILE BOTTOM NAVIGATION BAR -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 px-1 py-1.5 flex items-center justify-around">
+        <button onclick="switchTab('dashboard')" id="mtab-dashboard" class="tab-btn-m flex flex-col items-center justify-center text-cyan-400 w-16 py-1">
+            <i class="fa-solid fa-gauge-high text-lg"></i>
+            <span class="text-[10px] font-medium mt-0.5">Přehled</span>
+        </button>
+        <button onclick="switchTab('fuel')" id="mtab-fuel" class="tab-btn-m flex flex-col items-center justify-center text-slate-400 w-16 py-1">
+            <i class="fa-solid fa-gas-pump text-lg"></i>
+            <span class="text-[10px] font-medium mt-0.5">Palivo</span>
+        </button>
+        <button onclick="switchTab('service')" id="mtab-service" class="tab-btn-m flex flex-col items-center justify-center text-slate-400 w-16 py-1">
+            <i class="fa-solid fa-wrench text-lg"></i>
+            <span class="text-[10px] font-medium mt-0.5">Servis</span>
+        </button>
+        <button onclick="switchTab('tires')" id="mtab-tires" class="tab-btn-m flex flex-col items-center justify-center text-slate-400 w-16 py-1">
+            <i class="fa-solid fa-compact-disc text-lg"></i>
+            <span class="text-[10px] font-medium mt-0.5">Pneu</span>
+        </button>
+        <button onclick="switchTab('analytics')" id="mtab-analytics" class="tab-btn-m flex flex-col items-center justify-center text-slate-400 w-16 py-1">
+            <i class="fa-solid fa-chart-pie text-lg"></i>
+            <span class="text-[10px] font-medium mt-0.5">Grafy</span>
+        </button>
+    </nav>
+
+
+    <!-- ================= MODAL DIALOGS ================= -->
+
+    <!-- MODAL 0: Pre-configured Service Templates Library -->
+    <div id="templatesModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-5 space-y-4 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeModal('templatesModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            
+            <div>
+                <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-list-check text-indigo-400"></i>
+                    <span>Přednastavené servisní úkony & šablony</span>
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5">Vyberte úkon ze standardních doporučených servisních intervalů.</p>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-indigo-950/40 border border-indigo-500/30 flex items-center justify-between gap-3">
+                <div class="text-xs text-indigo-200">
+                    <strong>Přednastavený plán pro vaše auto:</strong>
+                    <span class="block text-[11px] text-indigo-300/80">Přidá všechny hlavní servisní intervaly narázd spočítané od vašeho aktuálního stavu tachometru.</span>
+                </div>
+                <button onclick="generateDefaultMaintenancePlanForActiveCar(); closeModal('templatesModal');" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition whitespace-nowrap">
+                    Přidat všechny
+                </button>
+            </div>
+
+            <!-- Template Grid Feed -->
+            <div id="templatesListContainer" class="space-y-2 text-xs"></div>
+        </div>
+    </div>
+
+    <!-- MODAL 1: Fuel Entry -->
+    <div id="fuelModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl relative">
+            <button onclick="closeModal('fuelModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+                <i class="fa-solid fa-gas-pump text-cyan-400"></i>
+                <span>Nové tankování</span>
+            </h3>
+
+            <form id="fuelForm" onsubmit="handleFuelSubmit(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Datum</label>
+                    <input type="date" id="fuelDate" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-cyan-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Stav tachometru (km)</label>
+                    <input type="number" id="fuelOdometer" placeholder="např. 132400" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-cyan-500 outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Množství (litry)</label>
+                        <input type="number" step="0.01" id="fuelLiters" placeholder="např. 52.4" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-cyan-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Cena celkem (Kč)</label>
+                        <input type="number" step="1" id="fuelPrice" placeholder="např. 1980" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-cyan-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-2 pt-1">
+                    <input type="checkbox" id="fuelFullTank" checked class="w-4 h-4 rounded bg-slate-800 border-slate-700 text-cyan-500">
+                    <label for="fuelFullTank" class="font-medium text-slate-200 cursor-pointer">Plná nádrž (pro výpočet spotřeby l/100km)</label>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Čerpací stanice / Poznámka</label>
+                    <input type="text" id="fuelStation" placeholder="Orlen, Shell, MOL..." class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-cyan-500 outline-none">
+                </div>
+
+                <div class="pt-2 flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('fuelModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-semibold">Zrušit</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-cyan-600 text-white font-bold shadow-lg shadow-cyan-600/20">Uložit tankování</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- MODAL 2: Service Entry -->
+    <div id="serviceModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl relative">
+            <button onclick="closeModal('serviceModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+                <i class="fa-solid fa-wrench text-indigo-400"></i>
+                <span>Nový servisní záznam</span>
+            </h3>
+
+            <form id="serviceForm" onsubmit="handleServiceSubmit(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Datum</label>
+                    <input type="date" id="serviceDate" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Tachometr (km)</label>
+                        <input type="number" id="serviceOdometer" placeholder="132400" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Kategorie</label>
+                        <select id="serviceCategory" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none">
+                            <option value="Motorový olej">Motorový olej & Filtry</option>
+                            <option value="Brzdy">Brzdy</option>
+                            <option value="Pneumatiky">Pneumatiky & Přezouvání</option>
+                            <option value="STK / Emise">STK / Emise</option>
+                            <option value="Podvozek">Podvozek & Řízení</option>
+                            <option value="Oprava">Oprava & Porucha</option>
+                            <option value="Ostatní">Ostatní</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Název úkonu</label>
+                    <input type="text" id="serviceTitle" placeholder="např. Výměna oleje Castrol 5W-30 + filtry" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Cena celkem (Kč)</label>
+                    <input type="number" id="serviceCost" placeholder="3500" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Poznámka / Díly</label>
+                    <textarea id="serviceDesc" rows="2" placeholder="Značka dílů, autoservis, poznámky..." class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+                </div>
+
+                <div class="pt-2 flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('serviceModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-semibold">Zrušit</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-indigo-600 text-white font-bold shadow-lg shadow-indigo-600/20">Uložit servis</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- MODAL 3: Detailed Tire Set Creation / Editing -->
+    <div id="tireSetModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeModal('tireSetModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+                <i class="fa-solid fa-compact-disc text-amber-400"></i>
+                <span>Přidat novou sadu pneumatik</span>
+            </h3>
+
+            <form id="tireSetForm" onsubmit="handleTireSetSubmit(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Označení sady (Název)</label>
+                    <input type="text" id="tsetCustomName" placeholder="např. Zimní Continental 16&quot;" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Typ pneumatik</label>
+                        <select id="tsetType" class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                            <option value="LETNI">Letní</option>
+                            <option value="ZIMNI">Zimní</option>
+                            <option value="CELOROCNI">Celoroční</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Značka & Model</label>
+                        <input type="text" id="tsetBrand" placeholder="Continental WinterContact TS870" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Rozměr pneumatik</label>
+                        <input type="text" id="tsetDimension" placeholder="205/55 R16 91H" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">DOT (Týden/Rok)</label>
+                        <input type="text" id="tsetDOT" placeholder="např. 3823 (38. týden 2023)" class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Vzorek při pořízení (mm)</label>
+                        <input type="number" step="0.1" id="tsetInitialTread" placeholder="8.0 (Nové)" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Aktuální naměřený vzorek (mm)</label>
+                        <input type="number" step="0.1" id="tsetCurrentTread" placeholder="např. 6.5" class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Umístění uskladnění / Poznámka</label>
+                    <input type="text" id="tsetLocation" placeholder="Pneuservis / Garáž / Sklep..." class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+
+                <div class="pt-2 flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('tireSetModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-semibold">Zrušit</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-amber-600 text-white font-bold shadow-lg shadow-amber-600/20">Uložit sadu pneu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- MODAL 4: Tire Swap / Mounting Entry with COST -->
+    <div id="tireSwapModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl relative">
+            <button onclick="closeModal('tireSwapModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+                <i class="fa-solid fa-arrows-rotate text-amber-400"></i>
+                <span>Přezutí vozidla / Obutí sady</span>
+            </h3>
+
+            <form id="tireSwapForm" onsubmit="handleTireSwapSubmit(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Datum přezutí</label>
+                    <input type="date" id="tireSwapDate" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Stav tachometru při přezutí (km)</label>
+                    <input type="number" id="tireSwapOdometer" placeholder="132400" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Vyberte nasazovanou sadu z garáže</label>
+                    <select id="tireSwapSetId" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Cena přezutí / servisu pneu (Kč)</label>
+                        <input type="number" id="tireSwapCost" placeholder="např. 800" class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Naměřený vzorek (mm)</label>
+                        <input type="number" step="0.1" id="tireSwapTread" placeholder="např. 7.2" class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Poznámka / Pneuservis</label>
+                    <input type="text" id="tireSwapNotes" placeholder="Vyvážení, uskladnění druhých..." class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+
+                <div class="pt-2 flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('tireSwapModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-semibold">Zrušit</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-amber-600 text-white font-bold shadow-lg shadow-amber-600/20">Uložit přezutí</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- MODAL 5: Custom Service Reminder Entry -->
+    <div id="reminderModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl relative">
+            <button onclick="closeModal('reminderModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+                <i class="fa-solid fa-bell text-amber-400"></i>
+                <span>Nová vlastní servisní připomínka</span>
+            </h3>
+
+            <form id="reminderForm" onsubmit="handleReminderSubmit(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Název upozornění</label>
+                    <input type="text" id="reminderTitle" placeholder="např. Výměna svíček nebo kontrola klimatizace" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Kategorie</label>
+                    <select id="reminderCategory" class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                        <option value="Motorový olej">Motorový olej & Filtry</option>
+                        <option value="Brzdy">Brzdy</option>
+                        <option value="Pneumatiky">Pneumatiky</option>
+                        <option value="STK / Emise">STK / Emise</option>
+                        <option value="Podvozek">Podvozek</option>
+                        <option value="Oprava">Oprava</option>
+                        <option value="Ostatní">Ostatní</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Typ podmínky</label>
+                    <select id="reminderType" onchange="toggleReminderTypeFields()" class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                        <option value="ODOMETER">Podle kilometrů (např. při 150 000 km)</option>
+                        <option value="DATE">Podle data (např. za rok)</option>
+                        <option value="BOTH">Podle kilometrů i data (co nastane dříve)</option>
+                    </select>
+                </div>
+
+                <div id="reminderOdoGroup">
+                    <label class="block font-semibold text-slate-300 mb-1">Cílové kilometry (km)</label>
+                    <input type="number" id="reminderTargetOdometer" placeholder="např. 145000" class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+
+                <div id="reminderDateGroup">
+                    <label class="block font-semibold text-slate-300 mb-1">Cílové datum</label>
+                    <input type="date" id="reminderTargetDate" class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+
+                <!-- Recurring Interval Setup -->
+                <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700 space-y-2">
+                    <span class="font-bold text-slate-200 block">Opakovat tento servis pravidelně?</span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">Interval km</label>
+                            <input type="number" id="reminderRecurringKm" placeholder="např. 15000" class="w-full bg-slate-900 text-white rounded-lg border border-slate-700 px-2.5 py-1.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">Interval v měsících</label>
+                            <input type="number" id="reminderRecurringMonths" placeholder="např. 12" class="w-full bg-slate-900 text-white rounded-lg border border-slate-700 px-2.5 py-1.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-2 flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('reminderModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-semibold">Zrušit</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-amber-600 text-white font-bold shadow-lg shadow-amber-600/20">Uložit připomínku</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- MODAL 6: Reminder Completion Confirmation & Auto Renewal Logging -->
+    <div id="completeReminderModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeModal('completeReminderModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+                <i class="fa-solid fa-circle-check text-emerald-400"></i>
+                <span>Dokončení servisního úkonu</span>
+            </h3>
+
+            <p id="completeReminderText" class="text-xs text-slate-300 bg-slate-800/80 p-3 rounded-xl border border-slate-700/80"></p>
+
+            <form id="completeReminderForm" onsubmit="handleCompleteReminderSubmit(event)" class="space-y-3 text-xs">
+                <input type="hidden" id="completeReminderId">
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Datum dokončení</label>
+                        <input type="date" id="completeReminderDate" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Stav tachometru (km)</label>
+                        <input type="number" id="completeReminderOdometer" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Skutečná cena úkonu (Kč)</label>
+                    <input type="number" id="completeReminderCost" placeholder="např. 2500 (0 pokud bez nákladů)" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Poznámka / Detaily servisu</label>
+                    <textarea id="completeReminderNotes" rows="2" placeholder="Značka dílů, servisman, podrobnosti..." class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2 focus:ring-2 focus:ring-emerald-500 outline-none"></textarea>
+                </div>
+
+                <!-- AUTO RENEW RECURRING CHECKBOX -->
+                <div class="p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-500/30 space-y-2">
+                    <div class="flex items-center space-x-2">
+                        <input type="checkbox" id="completeAutoRenew" checked onchange="toggleAutoRenewFields()" class="w-4 h-4 rounded bg-slate-800 border-slate-700 text-emerald-500">
+                        <label for="completeAutoRenew" class="font-bold text-emerald-300 cursor-pointer">Automaticky naplánovat příští interval servisu</label>
+                    </div>
+                    
+                    <div id="autoRenewDetailsGroup" class="grid grid-cols-2 gap-2 pt-1">
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">Příští servis za (+km)</label>
+                            <input type="number" id="renewIntervalKm" placeholder="15000" class="w-full bg-slate-900 text-white rounded-lg border border-slate-700 px-2.5 py-1.5 focus:ring-2 focus:ring-emerald-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">Příští servis za (+měsíců)</label>
+                            <input type="number" id="renewIntervalMonths" placeholder="12" class="w-full bg-slate-900 text-white rounded-lg border border-slate-700 px-2.5 py-1.5 focus:ring-2 focus:ring-emerald-500 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-2 flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('completeReminderModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-semibold">Storno</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 text-white font-bold shadow-lg shadow-emerald-600/20">Potvrdit a zapsat do historie</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- MODAL 7: Vehicle Management -->
+    <div id="vehicleModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl relative">
+            <button onclick="closeModal('vehicleModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+                <i class="fa-solid fa-car text-cyan-400"></i>
+                <span>Přidat / Upravit vozidlo</span>
+            </h3>
+
+            <form id="vehicleForm" onsubmit="handleVehicleSubmit(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Značka a Model vozidla</label>
+                    <input type="text" id="vehName" placeholder="Škoda Superb Combi 2.0 TDI" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-cyan-500 outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">SPZ / RZ</label>
+                        <input type="text" id="vehPlate" placeholder="5P2 9012" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-cyan-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Rok výroby</label>
+                        <input type="number" id="vehYear" placeholder="2021" class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-cyan-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Počáteční km</label>
+                        <input type="number" id="vehInitialKm" placeholder="120000" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-cyan-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Aktuální stav km</label>
+                        <input type="number" id="vehCurrentKm" placeholder="132400" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-cyan-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="pt-2 flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('vehicleModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-semibold">Zrušit</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-cyan-600 text-white font-bold shadow-lg shadow-cyan-600/20">Uložit auto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- MODAL 8: Quick Odometer Log -->
+    <div id="odometerModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl relative">
+            <button onclick="closeModal('odometerModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+                <i class="fa-solid fa-tachograph-digital text-cyan-400"></i>
+                <span>Aktualizovat stav tachometru</span>
+            </h3>
+
+            <form onsubmit="handleOdometerQuickUpdate(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Celkový ujetý nájezd (km)</label>
+                    <input type="number" id="quickOdometerInput" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3.5 py-3 text-lg font-extrabold focus:ring-2 focus:ring-cyan-500 outline-none">
+                </div>
+
+                <div class="pt-2 flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('odometerModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-semibold">Zrušit</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-cyan-600 text-white font-bold">Uložit nájezd</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- MODAL 9: Data Import & JSON Backup -->
+    <div id="importExportModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl relative">
+            <button onclick="closeModal('importExportModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+                <i class="fa-solid fa-database text-cyan-400"></i>
+                <span>Správa databáze & Zálohy</span>
+            </h3>
+
+            <div class="space-y-3 text-xs text-slate-300">
+                <div class="p-4 rounded-xl bg-slate-800/80 border border-slate-700 space-y-2">
+                    <h4 class="font-bold text-white flex items-center justify-between">
+                        <span>Záloha do JSON souboru</span>
+                        <i class="fa-solid fa-download text-cyan-400"></i>
+                    </h4>
+                    <p class="text-slate-400">Exportuje kompletní aplikaci (auta, tankování, servis, pneumatiky) pro přenos do jiného telefonu.</p>
+                    <button onclick="exportDataJSON()" class="w-full py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold transition">
+                        Stáhnout zálohu JSON
+                    </button>
+                </div>
+
+                <div class="p-4 rounded-xl bg-slate-800/80 border border-slate-700 space-y-2">
+                    <h4 class="font-bold text-white flex items-center justify-between">
+                        <span>Obnovit data ze zálohy</span>
+                        <i class="fa-solid fa-upload text-emerald-400"></i>
+                    </h4>
+                    <p class="text-slate-400">Nahrajte váš dříve stažený JSON soubor pro obnovení všech dat.</p>
+                    <input type="file" id="importFileInput" accept=".json" class="hidden" onchange="importDataJSON(event)">
+                    <button onclick="document.getElementById('importFileInput').click()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition">
+                        Vybrat soubor JSON
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ================= JAVASCRIPT APPLICATION CORE ================= -->
+    <script>
+        const STORAGE_KEY = 'autodenik_app_data_v5';
+
+        // STANDARD SERVICE TEMPLATES LIBRARY
+        const SERVICE_TEMPLATES = [
+            {
+                id: 'tpl_oil',
+                title: 'Výměna motorového oleje a filtru',
+                category: 'Motorový olej',
+                intervalKm: 15000,
+                intervalMonths: 12,
+                description: 'Každých 15 000 km nebo 1 rok'
+            },
+            {
+                id: 'tpl_stk',
+                title: 'STK a Emise',
+                category: 'STK / Emise',
+                intervalKm: null,
+                intervalMonths: 24,
+                description: 'Pravidelná technická kontrola každé 2 roky'
+            },
+            {
+                id: 'tpl_cabin_filter',
+                title: 'Kabinový a pylový filtr',
+                category: 'Motorový olej',
+                intervalKm: 15000,
+                intervalMonths: 12,
+                description: 'Výměna kabinového filtru každých 15 000 km / 1 rok'
+            },
+            {
+                id: 'tpl_air_filter',
+                title: 'Vzduchový filtr motoru',
+                category: 'Motorový olej',
+                intervalKm: 30000,
+                intervalMonths: 24,
+                description: 'Každých 30 000 km nebo 2 roky'
+            },
+            {
+                id: 'tpl_brake_fluid',
+                title: 'Výměna brzdové kapaliny',
+                category: 'Brzdy',
+                intervalKm: null,
+                intervalMonths: 24,
+                description: 'Každé 2 roky pro správný bod varu'
+            },
+            {
+                id: 'tpl_brakes_check',
+                title: 'Kontrola brzd a destiček',
+                category: 'Brzdy',
+                intervalKm: 30000,
+                intervalMonths: 24,
+                description: 'Kontrola tloušťky kotoučů a destiček'
+            },
+            {
+                id: 'tpl_spark_plugs',
+                title: 'Zapalovací / žhavicí svíčky',
+                category: 'Motorový olej',
+                intervalKm: 60000,
+                intervalMonths: 48,
+                description: 'Každých 60 000 km / 4 roky'
+            },
+            {
+                id: 'tpl_timing_belt',
+                title: 'Výměna rozvodové sady a vodní pumpy',
+                category: 'Oprava',
+                intervalKm: 120000,
+                intervalMonths: 60,
+                description: 'Doporučený interval rozvodů (120 000 km / 5 let)'
+            },
+            {
+                id: 'tpl_geometry',
+                title: 'Geometrie a kontrola podvozku',
+                category: 'Podvozek',
+                intervalKm: 20000,
+                intervalMonths: 12,
+                description: 'Měření geometrie náprav a čepů jednou ročně'
+            }
+        ];
+
+        // Global State Structure
+        let AppState = {
+            activeVehicleId: 'veh_default',
+            vehicles: [
+                {
+                    id: 'veh_default',
+                    name: 'Škoda Superb Combi 2.0 TDI',
+                    plate: '5P2 9012',
+                    year: 2021,
+                    initialKm: 120000,
+                    currentKm: 132400
+                }
+            ],
+            fuelLogs: [],
+            serviceLogs: [],
+            reminders: [],
+            tireSets: [],
+            tireSwaps: [],
+            activeTab: 'dashboard',
+            theme: 'dark'
+        };
+
+        // Chart.js global handles
+        let expenseCategoryChartInstance = null;
+        let monthlyExpenseChartInstance = null;
+
+        // On App Load
+        window.onload = function() {
+            loadFromLocalStorage();
+
+            // Populate initial demo data if database is empty
+            if (!AppState.fuelLogs || AppState.fuelLogs.length === 0) {
+                generateDemoDataState();
+            }
+
+            // Set current date in modal input fields
+            const todayStr = new Date().toISOString().split('T')[0];
+            if (document.getElementById('fuelDate')) document.getElementById('fuelDate').value = todayStr;
+            if (document.getElementById('serviceDate')) document.getElementById('serviceDate').value = todayStr;
+            if (document.getElementById('tireSwapDate')) document.getElementById('tireSwapDate').value = todayStr;
+
+            renderAll();
+        };
+
+        function saveToLocalStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(AppState));
+        }
+
+        function loadFromLocalStorage() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    AppState = { ...AppState, ...parsed };
+                }
+            } catch (e) {
+                console.error("Chyba při čtení paměti:", e);
+            }
+        }
+
+        function getActiveVehicle() {
+            let v = AppState.vehicles.find(item => item.id === AppState.activeVehicleId);
+            if (!v && AppState.vehicles.length > 0) {
+                v = AppState.vehicles[0];
+                AppState.activeVehicleId = v.id;
+            }
+            return v;
+        }
+
+        function switchTab(tabId) {
+            AppState.activeTab = tabId;
+            
+            document.querySelectorAll('.page-content').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById(`page-${tabId}`);
+            if (target) target.classList.remove('hidden');
+
+            // Desktop Tab Highlight
+            document.querySelectorAll('.tab-btn-d').forEach(btn => {
+                btn.classList.remove('bg-cyan-600', 'text-white', 'shadow-lg');
+                btn.classList.add('text-slate-400', 'hover:text-slate-200');
+            });
+            const dTab = document.getElementById(`dtab-${tabId}`);
+            if (dTab) {
+                dTab.classList.add('bg-cyan-600', 'text-white', 'shadow-lg');
+                dTab.classList.remove('text-slate-400');
+            }
+
+            // Mobile Navigation Highlight
+            document.querySelectorAll('.tab-btn-m').forEach(btn => {
+                btn.classList.remove('text-cyan-400');
+                btn.classList.add('text-slate-400');
+            });
+            const mTab = document.getElementById(`mtab-${tabId}`);
+            if (mTab) {
+                mTab.classList.add('text-cyan-400');
+                mTab.classList.remove('text-slate-400');
+            }
+
+            if (tabId === 'analytics') {
+                setTimeout(renderCharts, 50);
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function switchVehicle(vId) {
+            AppState.activeVehicleId = vId;
+            saveToLocalStorage();
+            renderAll();
+            showToast("Vozidlo úspěšně změněno", "info");
+        }
+
+        // MAIN RENDER FUNCTION
+        function renderAll() {
+            const currentCar = getActiveVehicle();
+            if (!currentCar) return;
+
+            // Render Vehicle Dropdown
+            const selectEl = document.getElementById('vehicleSelect');
+            if (selectEl) {
+                selectEl.innerHTML = AppState.vehicles.map(v => 
+                    `<option value="${v.id}" ${v.id === AppState.activeVehicleId ? 'selected' : ''}>${v.name} (${v.plate})</option>`
+                ).join('');
+            }
+
+            // Car Banner
+            document.getElementById('bannerCarName').innerText = currentCar.name;
+            document.getElementById('bannerCarPlate').innerText = currentCar.plate;
+            document.getElementById('bannerCarMeta').innerText = `Rok: ${currentCar.year || 'N/A'} • Počáteční stav: ${formatNum(currentCar.initialKm)} km`;
+
+            // Calculate Metrics
+            const stats = calculateVehicleStats(currentCar.id);
+
+            // Dashboard Metrics
+            document.getElementById('statOdometer').innerText = formatNum(currentCar.currentKm);
+            document.getElementById('statTrackedKm').innerText = `${formatNum(stats.trackedKm)} km`;
+            document.getElementById('statTotalSpent').innerText = formatNum(stats.totalSpent);
+            document.getElementById('statAvgConsumption').innerText = stats.avgConsumption.toFixed(1);
+            document.getElementById('statCostPerKm').innerText = stats.costPerKm.toFixed(2);
+
+            // Render Templates Library Modal Content
+            renderTemplatesModalList();
+
+            // Render Views
+            renderDashboardReminders(currentCar);
+            renderDashboardTires(currentCar);
+            renderDashboardActivity(currentCar);
+
+            renderFuelLogs(currentCar);
+            renderServiceLogs(currentCar);
+            renderServiceReminders(currentCar);
+
+            renderTiresSection(currentCar);
+
+            // Unit costs table
+            document.getElementById('costFuelPerKm').innerText = `${stats.fuelPerKm.toFixed(2)} Kč`;
+            document.getElementById('costServicePerKm').innerText = `${stats.servicePerKm.toFixed(2)} Kč`;
+            document.getElementById('costTiresPerKm').innerText = `${stats.tirePerKm.toFixed(2)} Kč`;
+            document.getElementById('costTotalPerKm').innerText = `${stats.costPerKm.toFixed(2)} Kč`;
+
+            if (AppState.activeTab === 'analytics') {
+                renderCharts();
+            }
+        }
+
+
+        // ================= SERVICE TEMPLATES LOGIC =================
+
+        function addMonthToDateStr(dateStr, monthsToAdd) {
+            const d = dateStr ? new Date(dateStr) : new Date();
+            d.setMonth(d.getMonth() + Number(monthsToAdd));
+            return d.toISOString().split('T')[0];
+        }
+
+        function renderTemplatesModalList() {
+            const container = document.getElementById('templatesListContainer');
+            if (!container) return;
+
+            const car = getActiveVehicle();
+            const currentKm = car ? car.currentKm : 0;
+
+            container.innerHTML = SERVICE_TEMPLATES.map(tpl => {
+                const targetKm = tpl.intervalKm ? currentKm + tpl.intervalKm : null;
+                const targetDate = tpl.intervalMonths ? addMonthToDateStr(new Date().toISOString().split('T')[0], tpl.intervalMonths) : null;
+
+                return `
+                    <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-between gap-2">
+                        <div>
+                            <div class="font-bold text-white">${tpl.title}</div>
+                            <div class="text-[11px] text-slate-400 mt-0.5">${tpl.description}</div>
+                            <div class="text-[10px] text-cyan-400 mt-1 font-semibold">
+                                ${targetKm ? `Příští: ${formatNum(targetKm)} km` : ''}
+                                ${targetDate ? ` • Termín: ${formatDate(targetDate)}` : ''}
+                            </div>
+                        </div>
+                        <button onclick="addReminderFromTemplate('${tpl.id}')" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow transition whitespace-nowrap">
+                            + Přidat
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function addReminderFromTemplate(templateId, customCarId = null) {
+            const car = customCarId ? AppState.vehicles.find(v => v.id === customCarId) : getActiveVehicle();
+            const tpl = SERVICE_TEMPLATES.find(t => t.id === templateId);
+            if (!car || !tpl) return;
+
+            const todayStr = new Date().toISOString().split('T')[0];
+            const targetOdometer = tpl.intervalKm ? car.currentKm + tpl.intervalKm : null;
+            const targetDate = tpl.intervalMonths ? addMonthToDateStr(todayStr, tpl.intervalMonths) : null;
+
+            let type = 'ODOMETER';
+            if (targetOdometer && targetDate) type = 'BOTH';
+            else if (targetDate) type = 'DATE';
+
+            AppState.reminders.push({
+                id: 'rem_tpl_' + Date.now() + Math.floor(Math.random() * 1000),
+                vehicleId: car.id,
+                title: tpl.title,
+                category: tpl.category,
+                type: type,
+                targetOdometer: targetOdometer,
+                targetDate: targetDate,
+                recurringKm: tpl.intervalKm,
+                recurringMonths: tpl.intervalMonths,
+                isCompleted: false
+            });
+
+            saveToLocalStorage();
+            renderAll();
+            showToast(`Přidán úkon: ${tpl.title}`, "success");
+        }
+
+        // Generate recommended maintenance plan for active vehicle
+        function generateDefaultMaintenancePlanForActiveCar() {
+            const car = getActiveVehicle();
+            if (!car) return;
+
+            // Clear uncompleted default reminders to avoid duplicates
+            AppState.reminders = AppState.reminders.filter(r => r.vehicleId !== car.id || r.isCompleted);
+
+            SERVICE_TEMPLATES.forEach(tpl => {
+                addReminderFromTemplate(tpl.id, car.id);
+            });
+
+            closeModal('templatesModal');
+            showToast(`Vygenerován kompletní doporučený plán údržby!`, "success");
+        }
+
+
+        // ================= STATS ENGINE & CALCULATIONS =================
+
+        function calculateVehicleStats(vehicleId) {
+            const currentCar = AppState.vehicles.find(v => v.id === vehicleId);
+            if (!currentCar) return { totalSpent: 0, trackedKm: 0, avgConsumption: 0, costPerKm: 0, fuelPerKm: 0, servicePerKm: 0, tirePerKm: 0 };
+
+            const vFuel = AppState.fuelLogs.filter(f => f.vehicleId === vehicleId);
+            const vService = AppState.serviceLogs.filter(s => s.vehicleId === vehicleId);
+
+            const fuelTotal = vFuel.reduce((sum, item) => sum + (Number(item.totalPrice) || 0), 0);
+            
+            // Total service divided into general service and tires
+            const totalServiceCost = vService.reduce((sum, item) => sum + (Number(item.cost) || 0), 0);
+            const tireServiceCost = vService.filter(s => s.category === 'Pneumatiky').reduce((sum, item) => sum + (Number(item.cost) || 0), 0);
+            const generalServiceCost = totalServiceCost - tireServiceCost;
+
+            const totalSpent = fuelTotal + totalServiceCost;
+
+            const trackedKm = Math.max(0, currentCar.currentKm - currentCar.initialKm);
+
+            // Full-tank fuel consumption logic
+            const sortedFuel = [...vFuel].sort((a, b) => a.odometer - b.odometer);
+            let totalFullLiters = 0;
+            let totalFullDistance = 0;
+            let prevFull = null;
+            let tempLiters = 0;
+
+            sortedFuel.forEach(f => {
+                if (prevFull !== null) {
+                    tempLiters += Number(f.liters);
+                }
+                if (f.isFullTank) {
+                    if (prevFull !== null) {
+                        const dist = f.odometer - prevFull.odometer;
+                        if (dist > 0) {
+                            totalFullDistance += dist;
+                            totalFullLiters += tempLiters;
+                        }
+                    }
+                    prevFull = f;
+                    tempLiters = 0;
+                }
+            });
+
+            const avgConsumption = totalFullDistance > 0 ? (totalFullLiters / totalFullDistance) * 100 : 0;
+            const costPerKm = trackedKm > 0 ? totalSpent / trackedKm : 0;
+            const fuelPerKm = trackedKm > 0 ? fuelTotal / trackedKm : 0;
+            const servicePerKm = trackedKm > 0 ? generalServiceCost / trackedKm : 0;
+            const tirePerKm = trackedKm > 0 ? tireServiceCost / trackedKm : 0;
+
+            return { totalSpent, fuelTotal, serviceTotal: totalServiceCost, generalServiceCost, tireServiceCost, trackedKm, avgConsumption, costPerKm, fuelPerKm, servicePerKm, tirePerKm };
+        }
+
+        // Calculate mileage accumulated on each tire set from swap history
+        function getTireSetsWithCalculatedMileage(vehicleId) {
+            const currentCar = AppState.vehicles.find(v => v.id === vehicleId);
+            const sets = AppState.tireSets.filter(s => s.vehicleId === vehicleId);
+            const swaps = AppState.tireSwaps.filter(s => s.vehicleId === vehicleId).sort((a, b) => a.odometer - b.odometer);
+
+            return sets.map(set => {
+                let accumulatedKm = 0;
+                
+                for (let i = 0; i < swaps.length; i++) {
+                    if (swaps[i].mountedSetId === set.id) {
+                        const startOdo = swaps[i].odometer;
+                        const endOdo = (i + 1 < swaps.length) ? swaps[i+1].odometer : Math.max(currentCar ? currentCar.currentKm : 0, startOdo);
+                        accumulatedKm += Math.max(0, endOdo - startOdo);
+                    }
+                }
+
+                return {
+                    ...set,
+                    accumulatedKm
+                };
+            });
+        }
+
+
+        // ================= RENDERING DOM PANELS =================
+
+        function renderDashboardReminders(car) {
+            const container = document.getElementById('dashboardRemindersList');
+            const noRemindersBanner = document.getElementById('noRemindersBanner');
+            if (!container) return;
+
+            const carReminders = AppState.reminders.filter(r => r.vehicleId === car.id && !r.isCompleted);
+
+            if (carReminders.length === 0) {
+                if (noRemindersBanner) noRemindersBanner.classList.remove('hidden');
+                container.innerHTML = `
+                    <div class="text-center py-3 text-slate-500 text-xs">
+                        Žádné aktivní upozornění. Všechny servisní intervaly splněny.
+                    </div>
+                `;
+                return;
+            } else {
+                if (noRemindersBanner) noRemindersBanner.classList.add('hidden');
+            }
+
+            container.innerHTML = carReminders.map(rem => {
+                let badge = '';
+                let progress = 0;
+                let subtext = '';
+
+                if (rem.type === 'ODOMETER' || (rem.type === 'BOTH' && rem.targetOdometer)) {
+                    const remainingKm = rem.targetOdometer - car.currentKm;
+                    if (remainingKm <= 0) {
+                        badge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30">Překročeno (${formatNum(Math.abs(remainingKm))} km)</span>`;
+                        progress = 100;
+                    } else if (remainingKm <= 1000) {
+                        badge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">Brzy (zbývá ${formatNum(remainingKm)} km)</span>`;
+                        progress = 90;
+                    } else {
+                        badge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Zbývá ${formatNum(remainingKm)} km</span>`;
+                        progress = Math.min(100, Math.max(10, (car.currentKm / rem.targetOdometer) * 100));
+                    }
+                    subtext = `Cíl: ${formatNum(rem.targetOdometer)} km`;
+                } else if (rem.type === 'DATE') {
+                    const targetDate = new Date(rem.targetDate);
+                    const diffDays = Math.ceil((targetDate - new Date()) / (1000 * 60 * 60 * 24));
+
+                    if (diffDays <= 0) {
+                        badge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30">Expirovalo (${Math.abs(diffDays)} dní)</span>`;
+                        progress = 100;
+                    } else if (diffDays <= 30) {
+                        badge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">Zbývá ${diffDays} dní</span>`;
+                        progress = 85;
+                    } else {
+                        badge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Termín: ${formatDate(rem.targetDate)}</span>`;
+                        progress = 40;
+                    }
+                    subtext = `Termín: ${formatDate(rem.targetDate)}`;
+                }
+
+                return `
+                    <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-white">${rem.title}</span>
+                            ${badge}
+                        </div>
+                        <div class="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-cyan-500 to-amber-500 rounded-full" style="width: ${progress}%"></div>
+                        </div>
+                        <div class="flex items-center justify-between text-[11px] text-slate-400">
+                            <span>${subtext}</span>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="deleteReminder('${rem.id}')" class="text-slate-500 hover:text-red-400 text-xs px-1">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                                <button onclick="promptCompleteReminder('${rem.id}')" class="px-2 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30 transition flex items-center space-x-1">
+                                    <i class="fa-solid fa-check text-xs"></i>
+                                    <span>Splněno</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderDashboardTires(car) {
+            const container = document.getElementById('dashTireContent');
+            const badge = document.getElementById('dashTireBadge');
+            if (!container) return;
+
+            const sets = getTireSetsWithCalculatedMileage(car.id);
+            const swaps = AppState.tireSwaps.filter(s => s.vehicleId === car.id).sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            const activeSwap = swaps.length > 0 ? swaps[0] : null;
+            const activeSet = activeSwap ? sets.find(s => s.id === activeSwap.mountedSetId) : null;
+
+            if (!activeSet) {
+                if (badge) badge.innerText = 'Žádné obutí';
+                container.innerHTML = `<div class="text-xs text-slate-500">Auto nemá zaregistrované přezutí.</div>`;
+                return;
+            }
+
+            if (badge) badge.innerText = `${activeSet.customName} (${activeSet.type})`;
+
+            const currentTread = activeSwap && activeSwap.treadDepthMm ? activeSwap.treadDepthMm : (activeSet.currentTreadMm || activeSet.initialTreadMm);
+            const legalLimit = activeSet.type === 'ZIMNI' ? 4.0 : 1.6;
+            const isNearLimit = currentTread <= legalLimit + 0.8;
+
+            container.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-400">Pneumatika:</span>
+                    <span class="font-bold text-white">${activeSet.brand} ${activeSet.dimension}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-400">DOT (Týden/Rok):</span>
+                    <span class="font-mono font-bold text-amber-400">${activeSet.dot || 'N/A'}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-400">Ujeto na této sadě:</span>
+                    <span class="font-extrabold text-cyan-400">${formatNum(activeSet.accumulatedKm)} km</span>
+                </div>
+                <div class="flex items-center justify-between pt-1">
+                    <span class="text-slate-400">Hloubka vzorku:</span>
+                    <span class="font-extrabold ${isNearLimit ? 'text-red-400' : 'text-emerald-400'}">${currentTread} mm (min ${legalLimit} mm)</span>
+                </div>
+            `;
+        }
+
+        function renderDashboardActivity(car) {
+            const container = document.getElementById('dashRecentActivity');
+            if (!container) return;
+
+            const fuelEvents = AppState.fuelLogs.filter(f => f.vehicleId === car.id).map(f => ({ ...f, eventType: 'FUEL', dateObj: new Date(f.date) }));
+            const serviceEvents = AppState.serviceLogs.filter(s => s.vehicleId === car.id).map(s => ({ ...s, eventType: 'SERVICE', dateObj: new Date(s.date) }));
+            const tireEvents = AppState.tireSwaps.filter(t => t.vehicleId === car.id).map(t => ({ ...t, eventType: 'TIRE', dateObj: new Date(t.date) }));
+
+            const allEvents = [...fuelEvents, ...serviceEvents, ...tireEvents].sort((a, b) => b.dateObj - a.dateObj).slice(0, 5);
+
+            if (allEvents.length === 0) {
+                container.innerHTML = `<div class="text-xs text-slate-500 text-center py-4">Zatím bez aktivit.</div>`;
+                return;
+            }
+
+            container.innerHTML = allEvents.map(ev => {
+                if (ev.eventType === 'FUEL') {
+                    return `
+                        <div class="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-slate-800/80">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-6 h-6 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-[10px]">
+                                    <i class="fa-solid fa-gas-pump"></i>
+                                </div>
+                                <div>
+                                    <div class="font-bold text-white">Tankování ${ev.liters} L</div>
+                                    <div class="text-[10px] text-slate-400">${formatDate(ev.date)} • ${formatNum(ev.odometer)} km</div>
+                                </div>
+                            </div>
+                            <span class="font-bold text-cyan-400">${formatNum(ev.totalPrice)} Kč</span>
+                        </div>
+                    `;
+                } else if (ev.eventType === 'SERVICE') {
+                    return `
+                        <div class="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-slate-800/80">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-[10px]">
+                                    <i class="fa-solid fa-wrench"></i>
+                                </div>
+                                <div>
+                                    <div class="font-bold text-white">${ev.title}</div>
+                                    <div class="text-[10px] text-slate-400">${formatDate(ev.date)} • ${formatNum(ev.odometer)} km</div>
+                                </div>
+                            </div>
+                            <span class="font-bold text-indigo-400">${formatNum(ev.cost)} Kč</span>
+                        </div>
+                    `;
+                } else {
+                    const setObj = AppState.tireSets.find(s => s.id === ev.mountedSetId);
+                    return `
+                        <div class="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-slate-800/80">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-6 h-6 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center text-[10px]">
+                                    <i class="fa-solid fa-compact-disc"></i>
+                                </div>
+                                <div>
+                                    <div class="font-bold text-white">Obuto: ${setObj ? setObj.customName : 'Sada'}</div>
+                                    <div class="text-[10px] text-slate-400">${formatDate(ev.date)} • ${formatNum(ev.odometer)} km</div>
+                                </div>
+                            </div>
+                            <span class="text-[11px] font-bold text-amber-400">${ev.cost ? formatNum(ev.cost) + ' Kč' : (ev.treadDepthMm ? ev.treadDepthMm + ' mm' : 'OK')}</span>
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+
+        function renderFuelLogs(car) {
+            const container = document.getElementById('fuelLogsContainer');
+            if (!container) return;
+
+            const logs = AppState.fuelLogs.filter(f => f.vehicleId === car.id).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            const totalLiters = logs.reduce((sum, item) => sum + (Number(item.liters) || 0), 0);
+            const totalCost = logs.reduce((sum, item) => sum + (Number(item.totalPrice) || 0), 0);
+            const avgPricePerL = totalLiters > 0 ? totalCost / totalLiters : 0;
+
+            document.getElementById('fuelTotalLiters').innerText = `${totalLiters.toFixed(1)} L`;
+            document.getElementById('fuelTotalCost').innerText = `${formatNum(totalCost)} Kč`;
+            document.getElementById('fuelAvgPricePerLiter').innerText = `${avgPricePerL.toFixed(2)} Kč`;
+
+            if (logs.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-slate-500 text-xs">Žádné záznamy o tankování.</div>`;
+                return;
+            }
+
+            container.innerHTML = logs.map(f => {
+                const unitPrice = f.liters > 0 ? (f.totalPrice / f.liters).toFixed(2) : 0;
+                return `
+                    <div class="glass-panel p-3.5 rounded-2xl border border-slate-800 flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-9 h-9 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center font-bold">
+                                <i class="fa-solid fa-gas-pump text-sm"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs font-bold text-white">${formatDate(f.date)}</span>
+                                    ${f.isFullTank ? '<span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-400">Plná</span>' : ''}
+                                </div>
+                                <div class="text-[11px] text-slate-400">
+                                    ${formatNum(f.odometer)} km ${f.station ? '• ' + f.station : ''}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center space-x-4">
+                            <div class="text-right">
+                                <div class="text-xs font-extrabold text-white">${formatNum(f.totalPrice)} Kč</div>
+                                <div class="text-[10px] text-slate-400">${f.liters} L (${unitPrice} Kč/L)</div>
+                            </div>
+                            <button onclick="deleteFuelLog('${f.id}')" class="text-slate-500 hover:text-red-400 text-xs">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+
+        // Service Filter Controller
+        let activeServiceFilter = 'ALL';
+
+        function filterServiceLogs(cat) {
+            activeServiceFilter = cat;
+            document.querySelectorAll('.svc-filter-btn').forEach(btn => {
+                btn.classList.remove('bg-cyan-500', 'text-white');
+                btn.classList.add('bg-slate-800', 'text-slate-300');
+            });
+            event.target.classList.add('bg-cyan-500', 'text-white');
+            event.target.classList.remove('bg-slate-800', 'text-slate-300');
+            renderServiceLogs(getActiveVehicle());
+        }
+
+        function renderServiceLogs(car) {
+            const container = document.getElementById('serviceLogsContainer');
+            if (!container) return;
+
+            let logs = AppState.serviceLogs.filter(s => s.vehicleId === car.id);
+            if (activeServiceFilter !== 'ALL') {
+                logs = logs.filter(s => s.category === activeServiceFilter);
+            }
+            logs.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (logs.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-slate-500 text-xs">Žádné servisní úkony v této kategorii.</div>`;
+                return;
+            }
+
+            container.innerHTML = logs.map(s => `
+                <div class="glass-panel p-4 rounded-2xl border border-slate-800 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-9 h-9 rounded-xl ${s.category === 'Pneumatiky' ? 'bg-amber-500/10 text-amber-400' : 'bg-indigo-500/10 text-indigo-400'} flex items-center justify-center">
+                                <i class="fa-solid ${s.category === 'Pneumatiky' ? 'fa-compact-disc' : 'fa-wrench'} text-sm"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center space-x-2">
+                                    <h4 class="text-xs font-bold text-white">${s.title}</h4>
+                                    <span class="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-slate-800 text-slate-400 border border-slate-700">${s.category || 'Servis'}</span>
+                                </div>
+                                <p class="text-[10px] text-slate-400">${formatDate(s.date)} • ${formatNum(s.odometer)} km</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="text-xs font-extrabold ${s.category === 'Pneumatiky' ? 'text-amber-400' : 'text-indigo-400'}">${formatNum(s.cost)} Kč</span>
+                            <button onclick="deleteServiceLog('${s.id}')" class="text-slate-500 hover:text-red-400 text-xs">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    ${s.description ? `<p class="text-xs text-slate-300 bg-slate-900/50 p-2 rounded-lg border border-slate-800/80">${s.description}</p>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function renderServiceReminders(car) {
+            const container = document.getElementById('serviceRemindersContainer');
+            if (!container) return;
+
+            const carReminders = AppState.reminders.filter(r => r.vehicleId === car.id && !r.isCompleted);
+
+            if (carReminders.length === 0) {
+                container.innerHTML = `<div class="col-span-2 text-center py-2 text-slate-500 text-xs">Bez plánovaných intervalů.</div>`;
+                return;
+            }
+
+            container.innerHTML = carReminders.map(rem => `
+                <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between text-xs">
+                    <div>
+                        <div class="font-bold text-white">${rem.title}</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">
+                            ${rem.targetOdometer ? `Cíl: ${formatNum(rem.targetOdometer)} km` : ''}
+                            ${rem.targetDate ? ` • ${formatDate(rem.targetDate)}` : ''}
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-1.5">
+                        <button onclick="deleteReminder('${rem.id}')" class="text-slate-500 hover:text-red-400 text-xs p-1">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                        <button onclick="promptCompleteReminder('${rem.id}')" class="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[11px] font-bold border border-emerald-500/30 transition">
+                            Dokončit
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function deleteReminder(remId) {
+            AppState.reminders = AppState.reminders.filter(r => r.id !== remId);
+            saveToLocalStorage();
+            renderAll();
+            showToast("Upozornění smazáno", "info");
+        }
+
+
+        // Render Tire Garage & Sets
+        function renderTiresSection(car) {
+            const listContainer = document.getElementById('tireGarageContainer');
+            const historyContainer = document.getElementById('tireSwapsHistoryContainer');
+            if (!listContainer || !historyContainer) return;
+
+            const calculatedSets = getTireSetsWithCalculatedMileage(car.id);
+            const swaps = AppState.tireSwaps.filter(s => s.vehicleId === car.id).sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            const currentlyMountedSetId = swaps.length > 0 ? swaps[0].mountedSetId : null;
+
+            if (calculatedSets.length === 0) {
+                listContainer.innerHTML = `<div class="col-span-2 text-center py-6 text-slate-500 text-xs">V garáži nemáte žádné sady pneumatik. Klikněte na "+ Nová sada pneu".</div>`;
+            } else {
+                listContainer.innerHTML = calculatedSets.map(set => {
+                    const isMounted = set.id === currentlyMountedSetId;
+                    const legalMin = set.type === 'ZIMNI' ? 4.0 : 1.6;
+                    const currentTread = set.currentTreadMm || set.initialTreadMm;
+                    
+                    // Wear percentage calculation
+                    const wearProgress = Math.min(100, Math.max(0, ((currentTread - legalMin) / (set.initialTreadMm - legalMin)) * 100));
+
+                    return `
+                        <div class="glass-panel p-4 rounded-2xl border ${isMounted ? 'border-emerald-500/50 bg-emerald-950/10' : 'border-slate-800'} space-y-3 relative">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold text-xs">
+                                        <i class="fa-solid fa-compact-disc"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs font-bold text-white">${set.customName}</h4>
+                                        <span class="text-[10px] text-slate-400">${set.brand}</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-1.5">
+                                    ${isMounted ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Obuto</span>' : ''}
+                                    <button onclick="deleteTireSet('${set.id}')" class="text-slate-500 hover:text-red-400 text-xs p-1">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <div>
+                                    <span class="text-[10px] text-slate-400 block">Rozměr:</span>
+                                    <span class="font-semibold text-slate-200">${set.dimension}</span>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] text-slate-400 block">DOT (Týden/Rok):</span>
+                                    <span class="font-mono font-bold text-amber-400">${set.dot || 'Neuveden'}</span>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] text-slate-400 block">Ujeto celkem:</span>
+                                    <span class="font-extrabold text-cyan-400">${formatNum(set.accumulatedKm)} km</span>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] text-slate-400 block">Uskladnění:</span>
+                                    <span class="font-medium text-slate-300">${set.location || 'Nahráno'}</span>
+                                </div>
+                            </div>
+
+                            <!-- Wear bar gauge -->
+                            <div class="space-y-1 pt-1">
+                                <div class="flex justify-between text-[10px]">
+                                    <span class="text-slate-400">Vzorek: <strong class="text-white">${currentTread} mm</strong> (Nové ${set.initialTreadMm}mm)</span>
+                                    <span class="text-slate-400">Min limit: ${legalMin}mm</span>
+                                </div>
+                                <div class="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+                                    <div class="h-full ${currentTread <= legalMin + 1 ? 'bg-red-500' : 'bg-gradient-to-r from-amber-500 to-emerald-500'}" style="width: ${wearProgress}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Swaps history
+            if (swaps.length === 0) {
+                historyContainer.innerHTML = `<div class="text-center py-4 text-slate-500 text-xs">Zatím bez přezouvání.</div>`;
+            } else {
+                historyContainer.innerHTML = swaps.map(sw => {
+                    const setObj = calculatedSets.find(s => s.id === sw.mountedSetId);
+                    return `
+                        <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between text-xs">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold">
+                                    <i class="fa-solid fa-arrows-rotate text-xs"></i>
+                                </div>
+                                <div>
+                                    <div class="font-bold text-white">Obuto: ${setObj ? setObj.customName : 'Sada'}</div>
+                                    <div class="text-[10px] text-slate-400">${formatDate(sw.date)} • ${formatNum(sw.odometer)} km</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-bold text-amber-400">${sw.cost ? formatNum(sw.cost) + ' Kč' : (sw.treadDepthMm ? sw.treadDepthMm + ' mm' : 'Přezuto')}</div>
+                                <div class="text-[10px] text-slate-400">${sw.notes || ''}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Populate swap dropdown
+            const modalSelect = document.getElementById('tireSwapSetId');
+            if (modalSelect) {
+                modalSelect.innerHTML = calculatedSets.map(s => `<option value="${s.id}">${s.customName} - ${s.brand} (${s.dimension})</option>`).join('');
+            }
+        }
+
+
+        // ================= CHART VISUALIZATIONS =================
+
+        function renderCharts() {
+            const car = getActiveVehicle();
+            if (!car) return;
+
+            const stats = calculateVehicleStats(car.id);
+
+            // Expense Breakdown Doughnut
+            const ctxCat = document.getElementById('expenseCategoryChart');
+            if (ctxCat) {
+                if (expenseCategoryChartInstance) expenseCategoryChartInstance.destroy();
+
+                expenseCategoryChartInstance = new Chart(ctxCat, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Palivo (Kč)', 'Servis (Kč)', 'Pneumatiky (Kč)'],
+                        datasets: [{
+                            data: [stats.fuelTotal, stats.generalServiceCost, stats.tireServiceCost],
+                            backgroundColor: ['#06b6d4', '#6366f1', '#f59e0b'],
+                            borderColor: '#1e293b',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11 } } }
+                        }
+                    }
+                });
+            }
+
+            // Monthly Expense Bar
+            const ctxMonth = document.getElementById('monthlyExpenseChart');
+            if (ctxMonth) {
+                if (monthlyExpenseChartInstance) monthlyExpenseChartInstance.destroy();
+
+                const monthlyData = {};
+                const now = new Date();
+
+                for (let i = 5; i >= 0; i--) {
+                    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                    monthlyData[key] = 0;
+                }
+
+                AppState.fuelLogs.filter(f => f.vehicleId === car.id).forEach(f => {
+                    const key = f.date.substring(0, 7);
+                    if (monthlyData[key] !== undefined) monthlyData[key] += Number(f.totalPrice) || 0;
+                });
+
+                AppState.serviceLogs.filter(s => s.vehicleId === car.id).forEach(s => {
+                    const key = s.date.substring(0, 7);
+                    if (monthlyData[key] !== undefined) monthlyData[key] += Number(s.cost) || 0;
+                });
+
+                monthlyExpenseChartInstance = new Chart(ctxMonth, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(monthlyData).map(k => {
+                            const [y, m] = k.split('-');
+                            return `${m}/${y.substring(2)}`;
+                        }),
+                        datasets: [{
+                            label: 'Výdaje (Kč)',
+                            data: Object.values(monthlyData),
+                            backgroundColor: '#10b981',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
+                            y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                        }
+                    }
+                });
+            }
+        }
+
+
+        // ================= FORM SUBMISSION HANDLERS =================
+
+        function handleFuelSubmit(e) {
+            e.preventDefault();
+            const car = getActiveVehicle();
+            if (!car) return;
+
+            const date = document.getElementById('fuelDate').value;
+            const odometer = Number(document.getElementById('fuelOdometer').value);
+            const liters = Number(document.getElementById('fuelLiters').value);
+            const totalPrice = Number(document.getElementById('fuelPrice').value);
+            const isFullTank = document.getElementById('fuelFullTank').checked;
+            const station = document.getElementById('fuelStation').value;
+
+            AppState.fuelLogs.push({
+                id: 'fuel_' + Date.now(),
+                vehicleId: car.id,
+                date,
+                odometer,
+                liters,
+                totalPrice,
+                isFullTank,
+                station
+            });
+
+            if (odometer > car.currentKm) car.currentKm = odometer;
+
+            saveToLocalStorage();
+            closeModal('fuelModal');
+            renderAll();
+            showToast("Tankování uloženo", "success");
+            e.target.reset();
+        }
+
+        function deleteFuelLog(id) {
+            AppState.fuelLogs = AppState.fuelLogs.filter(f => f.id !== id);
+            saveToLocalStorage();
+            renderAll();
+            showToast("Tankování smazáno", "info");
+        }
+
+        function handleServiceSubmit(e) {
+            e.preventDefault();
+            const car = getActiveVehicle();
+            if (!car) return;
+
+            const date = document.getElementById('serviceDate').value;
+            const odometer = Number(document.getElementById('serviceOdometer').value);
+            const category = document.getElementById('serviceCategory').value;
+            const title = document.getElementById('serviceTitle').value;
+            const cost = Number(document.getElementById('serviceCost').value);
+            const description = document.getElementById('serviceDesc').value;
+
+            AppState.serviceLogs.push({
+                id: 'svc_' + Date.now(),
+                vehicleId: car.id,
+                date,
+                odometer,
+                category,
+                title,
+                cost,
+                description
+            });
+
+            if (odometer > car.currentKm) car.currentKm = odometer;
+
+            saveToLocalStorage();
+            closeModal('serviceModal');
+            renderAll();
+            showToast("Servisní záznam uložen", "success");
+            e.target.reset();
+        }
+
+        function deleteServiceLog(id) {
+            AppState.serviceLogs = AppState.serviceLogs.filter(s => s.id !== id);
+            saveToLocalStorage();
+            renderAll();
+            showToast("Servisní záznam smazán", "info");
+        }
+
+        function handleTireSetSubmit(e) {
+            e.preventDefault();
+            const car = getActiveVehicle();
+            if (!car) return;
+
+            const customName = document.getElementById('tsetCustomName').value;
+            const type = document.getElementById('tsetType').value;
+            const brand = document.getElementById('tsetBrand').value;
+            const dimension = document.getElementById('tsetDimension').value;
+            const dot = document.getElementById('tsetDOT').value;
+            const initialTreadMm = Number(document.getElementById('tsetInitialTread').value);
+            const currentTreadMm = document.getElementById('tsetCurrentTread').value ? Number(document.getElementById('tsetCurrentTread').value) : initialTreadMm;
+            const location = document.getElementById('tsetLocation').value;
+
+            AppState.tireSets.push({
+                id: 'tset_' + Date.now(),
+                vehicleId: car.id,
+                customName,
+                type,
+                brand,
+                dimension,
+                dot,
+                initialTreadMm,
+                currentTreadMm,
+                location
+            });
+
+            saveToLocalStorage();
+            closeModal('tireSetModal');
+            renderAll();
+            showToast("Nová sada pneumatik přidána do garáže", "success");
+            e.target.reset();
+        }
+
+        function deleteTireSet(setId) {
+            if (confirm("Opravdu chcete smazat tuto sadu pneumatik?")) {
+                AppState.tireSets = AppState.tireSets.filter(s => s.id !== setId);
+                AppState.tireSwaps = AppState.tireSwaps.filter(sw => sw.mountedSetId !== setId);
+                saveToLocalStorage();
+                renderAll();
+                showToast("Sada pneumatik byla smazána", "info");
+            }
+        }
+
+        function handleTireSwapSubmit(e) {
+            e.preventDefault();
+            const car = getActiveVehicle();
+            if (!car) return;
+
+            const date = document.getElementById('tireSwapDate').value;
+            const odometer = Number(document.getElementById('tireSwapOdometer').value);
+            const mountedSetId = document.getElementById('tireSwapSetId').value;
+            const cost = document.getElementById('tireSwapCost').value ? Number(document.getElementById('tireSwapCost').value) : 0;
+            const treadDepthMm = document.getElementById('tireSwapTread').value ? Number(document.getElementById('tireSwapTread').value) : null;
+            const notes = document.getElementById('tireSwapNotes').value;
+
+            const setObj = AppState.tireSets.find(s => s.id === mountedSetId);
+
+            AppState.tireSwaps.push({
+                id: 'swap_' + Date.now(),
+                vehicleId: car.id,
+                date,
+                odometer,
+                mountedSetId,
+                cost,
+                treadDepthMm,
+                notes
+            });
+
+            if (treadDepthMm && setObj) {
+                setObj.currentTreadMm = treadDepthMm;
+            }
+
+            // Automatically record in service log as tire cost
+            if (cost > 0 || setObj) {
+                AppState.serviceLogs.push({
+                    id: 'svc_swap_' + Date.now(),
+                    vehicleId: car.id,
+                    date,
+                    odometer,
+                    category: 'Pneumatiky',
+                    title: `Přezutí: ${setObj ? setObj.customName : 'Sada'}`,
+                    cost: cost,
+                    description: notes ? `Přezutí pneumatik. ${notes}` : 'Servis a přezutí pneumatik.'
+                });
+            }
+
+            if (odometer > car.currentKm) car.currentKm = odometer;
+
+            saveToLocalStorage();
+            closeModal('tireSwapModal');
+            renderAll();
+            showToast("Záznam přezutí uložen a započítán", "success");
+        }
+
+        function handleReminderSubmit(e) {
+            e.preventDefault();
+            const car = getActiveVehicle();
+            if (!car) return;
+
+            const title = document.getElementById('reminderTitle').value;
+            const category = document.getElementById('reminderCategory').value;
+            const type = document.getElementById('reminderType').value;
+            const targetOdometer = document.getElementById('reminderTargetOdometer').value ? Number(document.getElementById('reminderTargetOdometer').value) : null;
+            const targetDate = document.getElementById('reminderTargetDate').value || null;
+            const recurringKm = document.getElementById('reminderRecurringKm').value ? Number(document.getElementById('reminderRecurringKm').value) : null;
+            const recurringMonths = document.getElementById('reminderRecurringMonths').value ? Number(document.getElementById('reminderRecurringMonths').value) : null;
+
+            AppState.reminders.push({
+                id: 'rem_' + Date.now(),
+                vehicleId: car.id,
+                title,
+                category,
+                type,
+                targetOdometer,
+                targetDate,
+                recurringKm,
+                recurringMonths,
+                isCompleted: false
+            });
+
+            saveToLocalStorage();
+            closeModal('reminderModal');
+            renderAll();
+            showToast("Připomínka nastavena", "success");
+            e.target.reset();
+        }
+
+        // Prompts reminder confirmation modal
+        function promptCompleteReminder(reminderId) {
+            const car = getActiveVehicle();
+            const rem = AppState.reminders.find(r => r.id === reminderId);
+            if (!rem || !car) return;
+
+            document.getElementById('completeReminderId').value = reminderId;
+            document.getElementById('completeReminderText').innerHTML = `Opravdu byl úkon <strong class="text-white">${rem.title}</strong> dokončen? Zadejte skutečné náklady pro zapsání do historie servisu:`;
+            
+            const todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('completeReminderDate').value = todayStr;
+            document.getElementById('completeReminderOdometer').value = car.currentKm;
+            document.getElementById('completeReminderCost').value = 0;
+            document.getElementById('completeReminderNotes').value = '';
+
+            // Set default auto-renew parameters
+            const autoRenewCheck = document.getElementById('completeAutoRenew');
+            if (autoRenewCheck) autoRenewCheck.checked = true;
+
+            const kmInput = document.getElementById('renewIntervalKm');
+            const monthsInput = document.getElementById('renewIntervalMonths');
+
+            if (kmInput) kmInput.value = rem.recurringKm || 15000;
+            if (monthsInput) monthsInput.value = rem.recurringMonths || 12;
+
+            toggleAutoRenewFields();
+            openModal('completeReminderModal');
+        }
+
+        function toggleAutoRenewFields() {
+            const isChecked = document.getElementById('completeAutoRenew').checked;
+            const detailsGroup = document.getElementById('autoRenewDetailsGroup');
+            if (detailsGroup) detailsGroup.classList.toggle('hidden', !isChecked);
+        }
+
+        // Handles reminder confirmation, logs to service, AND schedules next recurring interval
+        function handleCompleteReminderSubmit(e) {
+            e.preventDefault();
+            const car = getActiveVehicle();
+            const remId = document.getElementById('completeReminderId').value;
+            const rem = AppState.reminders.find(r => r.id === remId);
+
+            if (!rem || !car) return;
+
+            const date = document.getElementById('completeReminderDate').value;
+            const odometer = Number(document.getElementById('completeReminderOdometer').value);
+            const cost = Number(document.getElementById('completeReminderCost').value) || 0;
+            const notes = document.getElementById('completeReminderNotes').value;
+            const isAutoRenew = document.getElementById('completeAutoRenew').checked;
+
+            // 1. Mark reminder completed
+            rem.isCompleted = true;
+
+            // 2. Log entry to permanent service log
+            AppState.serviceLogs.push({
+                id: 'svc_rem_' + Date.now(),
+                vehicleId: car.id,
+                date: date,
+                odometer: odometer,
+                category: rem.category || 'Oprava',
+                title: rem.title,
+                cost: cost,
+                description: notes ? `Dokončeno z plánovaného úkonu. ${notes}` : 'Dokončeno z plánovaného servisního úkonu.'
+            });
+
+            // 3. Update vehicle odometer if higher
+            if (odometer > car.currentKm) car.currentKm = odometer;
+
+            // 4. Automatically schedule next recurring reminder interval
+            if (isAutoRenew) {
+                const intervalKm = Number(document.getElementById('renewIntervalKm').value) || null;
+                const intervalMonths = Number(document.getElementById('renewIntervalMonths').value) || null;
+
+                const nextTargetOdometer = intervalKm ? odometer + intervalKm : null;
+                const nextTargetDate = intervalMonths ? addMonthToDateStr(date, intervalMonths) : null;
+
+                let nextType = 'ODOMETER';
+                if (nextTargetOdometer && nextTargetDate) nextType = 'BOTH';
+                else if (nextTargetDate) nextType = 'DATE';
+
+                AppState.reminders.push({
+                    id: 'rem_rec_' + Date.now(),
+                    vehicleId: car.id,
+                    title: rem.title,
+                    category: rem.category || 'Motorový olej',
+                    type: nextType,
+                    targetOdometer: nextTargetOdometer,
+                    targetDate: nextTargetDate,
+                    recurringKm: intervalKm,
+                    recurringMonths: intervalMonths,
+                    isCompleted: false
+                });
+            }
+
+            saveToLocalStorage();
+            closeModal('completeReminderModal');
+            renderAll();
+            showToast(`Úkon "${rem.title}" byl zapsán a naplánován na příště`, "success");
+        }
+
+        function handleVehicleSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('vehName').value;
+            const plate = document.getElementById('vehPlate').value;
+            const year = Number(document.getElementById('vehYear').value);
+            const initialKm = Number(document.getElementById('vehInitialKm').value);
+            const currentKm = Number(document.getElementById('vehCurrentKm').value);
+
+            const newVeh = {
+                id: 'veh_' + Date.now(),
+                name,
+                plate,
+                year,
+                initialKm,
+                currentKm
+            };
+
+            AppState.vehicles.push(newVeh);
+            AppState.activeVehicleId = newVeh.id;
+
+            // Auto-generate recommended maintenance for new car
+            generateDefaultMaintenancePlanForActiveCar();
+
+            saveToLocalStorage();
+            closeModal('vehicleModal');
+            renderAll();
+            showToast("Nové vozidlo bylo vytvořeno s plánem údržby", "success");
+        }
+
+        function openOdometerModal() {
+            const car = getActiveVehicle();
+            if (car) {
+                document.getElementById('quickOdometerInput').value = car.currentKm;
+                openModal('odometerModal');
+            }
+        }
+
+        function handleOdometerQuickUpdate(e) {
+            e.preventDefault();
+            const car = getActiveVehicle();
+            if (car) {
+                car.currentKm = Number(document.getElementById('quickOdometerInput').value);
+                saveToLocalStorage();
+                closeModal('odometerModal');
+                renderAll();
+                showToast("Stav tachometru aktualizován", "success");
+            }
+        }
+
+        function toggleReminderTypeFields() {
+            const type = document.getElementById('reminderType').value;
+            document.getElementById('reminderOdoGroup').classList.toggle('hidden', type === 'DATE');
+            document.getElementById('reminderDateGroup').classList.toggle('hidden', type === 'ODOMETER');
+        }
+
+
+        // ================= CSV EXPORT UTILITIES =================
+
+        function exportToCSV(filename, rows) {
+            let csvContent = "\uFEFF"; // UTF-8 BOM for Czech diacritics in Excel
+            rows.forEach(row => {
+                const line = row.map(val => {
+                    let str = val === null || val === undefined ? '' : String(val);
+                    str = str.replace(/"/g, '""');
+                    if (str.includes(';') || str.includes('"') || str.includes('\n')) {
+                        str = `"${str}"`;
+                    }
+                    return str;
+                }).join(';'); // Czech Excel friendly semicolon
+                csvContent += line + "\r\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function exportFuelCSV() {
+            const car = getActiveVehicle();
+            if (!car) return;
+            const logs = AppState.fuelLogs.filter(f => f.vehicleId === car.id);
+            
+            const rows = [
+                ["Datum", "Tachometr (km)", "Mnozstvi (L)", "Cena celkem (Kč)", "Cena za litr (Kč)", "Plna nadrz", "Stanice"]
+            ];
+
+            logs.forEach(f => {
+                const unitPrice = f.liters > 0 ? (f.totalPrice / f.liters).toFixed(2) : 0;
+                rows.push([f.date, f.odometer, f.liters, f.totalPrice, unitPrice, f.isFullTank ? 'ANO' : 'NE', f.station || '']);
+            });
+
+            exportToCSV(`Tankovani_${car.plate}_${new Date().toISOString().split('T')[0]}.csv`, rows);
+            showToast("Export tankování do CSV stažen", "success");
+        }
+
+        function exportServiceCSV() {
+            const car = getActiveVehicle();
+            if (!car) return;
+            const logs = AppState.serviceLogs.filter(s => s.vehicleId === car.id);
+
+            const rows = [
+                ["Datum", "Tachometr (km)", "Kategorie", "Nazev ukonu", "Cena (Kč)", "Poznamka"]
+            ];
+
+            logs.forEach(s => {
+                rows.push([s.date, s.odometer, s.category || 'Servis', s.title, s.cost, s.description || '']);
+            });
+
+            exportToCSV(`Servis_${car.plate}_${new Date().toISOString().split('T')[0]}.csv`, rows);
+            showToast("Export servisu do CSV stažen", "success");
+        }
+
+
+        // ================= JSON IMPORT / EXPORT & DEMO DATA =================
+
+        function exportDataJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(AppState, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `AutoDenik_Backup_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+            showToast("Záloha JSON byla stažena", "success");
+        }
+
+        function importDataJSON(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const parsed = JSON.parse(event.target.result);
+                    if (parsed && parsed.vehicles) {
+                        AppState = parsed;
+                        saveToLocalStorage();
+                        closeModal('importExportModal');
+                        renderAll();
+                        showToast("Data úspěšně obnovena!", "success");
+                    } else {
+                        showToast("Neplatný soubor zálohy.", "error");
+                    }
+                } catch (err) {
+                    showToast("Chyba při čtení JSON.", "error");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function generateDemoDataState() {
+            AppState = {
+                activeVehicleId: 'veh_demo',
+                vehicles: [{
+                    id: 'veh_demo',
+                    name: 'Škoda Superb Combi 2.0 TDI',
+                    plate: '5P2 9012',
+                    year: 2021,
+                    initialKm: 120000,
+                    currentKm: 132400
+                }],
+                tireSets: [
+                    {
+                        id: 'ts_summer',
+                        vehicleId: 'veh_demo',
+                        customName: 'Letní sada 18"',
+                        type: 'LETNI',
+                        brand: 'Michelin Pilot Sport 5',
+                        dimension: '235/45 R18 98Y',
+                        dot: '1423',
+                        initialTreadMm: 8.0,
+                        currentTreadMm: 6.2,
+                        location: 'Pneuservis - Uskladněno'
+                    },
+                    {
+                        id: 'ts_winter',
+                        vehicleId: 'veh_demo',
+                        customName: 'Zimní sada 17"',
+                        type: 'ZIMNI',
+                        brand: 'Continental WinterContact TS 870',
+                        dimension: '215/55 R17 98H',
+                        dot: '3823',
+                        initialTreadMm: 8.5,
+                        currentTreadMm: 7.2,
+                        location: 'Nasazené na autě'
+                    }
+                ],
+                fuelLogs: [
+                    { id: 'f1', vehicleId: 'veh_demo', date: '2026-08-10', odometer: 121200, liters: 54.5, totalPrice: 2020, isFullTank: true, station: 'Orlen Benzina' },
+                    { id: 'f2', vehicleId: 'veh_demo', date: '2026-08-28', odometer: 122150, liters: 52.0, totalPrice: 1940, isFullTank: true, station: 'MOL' },
+                    { id: 'f3', vehicleId: 'veh_demo', date: '2026-09-15', odometer: 123100, liters: 53.2, totalPrice: 1990, isFullTank: true, station: 'Shell' },
+                    { id: 'f4', vehicleId: 'veh_demo', date: '2026-10-02', odometer: 124050, liters: 51.8, totalPrice: 1890, isFullTank: true, station: 'EuroOil' }
+                ],
+                serviceLogs: [
+                    { id: 's1', vehicleId: 'veh_demo', date: '2026-08-15', odometer: 121500, category: 'Motorový olej', title: 'Výměna oleje Castrol EDGE 5W-30 LL + filtry', cost: 3800, description: 'Vyměněn olejový, kabinový a palivový filtr Mann.' },
+                    { id: 's2', vehicleId: 'veh_demo', date: '2026-09-20', odometer: 123500, category: 'Brzdy', title: 'Zadní brzdové destičky Brembo', cost: 2600, description: 'Kontrola kotoučů ok.' },
+                    { id: 's3', vehicleId: 'veh_demo', date: '2026-10-20', odometer: 125200, category: 'Pneumatiky', title: 'Přezutí: Zimní sada 17"', cost: 800, description: 'Přezutí pneumatik a vyvážení kol.' }
+                ],
+                reminders: [
+                    { id: 'r1', vehicleId: 'veh_demo', title: 'Výměna motorového oleje a filtru', category: 'Motorový olej', type: 'BOTH', targetOdometer: 136500, targetDate: '2027-08-15', recurringKm: 15000, recurringMonths: 12, isCompleted: false },
+                    { id: 'r2', vehicleId: 'veh_demo', title: 'STK a Emise', category: 'STK / Emise', type: 'DATE', targetOdometer: null, targetDate: '2027-09-15', recurringKm: null, recurringMonths: 24, isCompleted: false }
+                ],
+                tireSwaps: [
+                    { id: 'sw1', vehicleId: 'veh_demo', date: '2026-04-15', odometer: 120200, mountedSetId: 'ts_summer', cost: 800, treadDepthMm: 6.8, notes: 'Přezutí na letní' },
+                    { id: 'sw2', vehicleId: 'veh_demo', date: '2026-10-20', odometer: 125200, mountedSetId: 'ts_winter', cost: 800, treadDepthMm: 7.2, notes: 'Vyvážení a zimní obutí' }
+                ],
+                activeTab: 'dashboard',
+                theme: 'dark'
+            };
+            saveToLocalStorage();
+        }
+
+        function loadDemoData() {
+            generateDemoDataState();
+            renderAll();
+            showToast("Demo data byla načtena", "success");
+        }
+
+        function confirmResetData() {
+            if (confirm("Opravdu chcete vymazat všechna data?")) {
+                AppState = {
+                    activeVehicleId: 'veh_default',
+                    vehicles: [{ id: 'veh_default', name: 'Moje Auto', plate: 'SPZ-123', year: 2020, initialKm: 100000, currentKm: 100000 }],
+                    fuelLogs: [],
+                    serviceLogs: [],
+                    reminders: [],
+                    tireSets: [],
+                    tireSwaps: [],
+                    activeTab: 'dashboard',
+                    theme: 'dark'
+                };
+                saveToLocalStorage();
+                renderAll();
+                showToast("Všechna data smazána", "info");
+            }
+        }
+
+
+        // ================= UTILITIES =================
+
+        function openModal(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('hidden');
+        }
+
+        function formatNum(num) {
+            if (num === null || num === undefined) return '0';
+            return num.toLocaleString('cs-CZ');
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('-');
+            return parts.length === 3 ? `${parts[2]}.${parts[1]}.${parts[0]}` : dateStr;
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                html.classList.add('light');
+                AppState.theme = 'light';
+            } else {
+                html.classList.remove('light');
+                html.classList.add('dark');
+                AppState.theme = 'dark';
+            }
+            saveToLocalStorage();
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            const toastIcon = document.getElementById('toastIcon');
+
+            if (!toast || !toastMsg) return;
+
+            toastMsg.innerText = msg;
+
+            if (type === 'success') {
+                toast.className = "fixed top-4 right-4 z-50 transform transition-transform duration-300 max-w-sm w-full p-4 rounded-xl shadow-2xl flex items-center space-x-3 text-white bg-emerald-600 shadow-emerald-900/40 translate-x-0";
+                toastIcon.className = "fa-solid fa-circle-check";
+            } else if (type === 'info') {
+                toast.className = "fixed top-4 right-4 z-50 transform transition-transform duration-300 max-w-sm w-full p-4 rounded-xl shadow-2xl flex items-center space-x-3 text-white bg-cyan-600 shadow-cyan-900/40 translate-x-0";
+                toastIcon.className = "fa-solid fa-circle-info";
+            } else {
+                toast.className = "fixed top-4 right-4 z-50 transform transition-transform duration-300 max-w-sm w-full p-4 rounded-xl shadow-2xl flex items-center space-x-3 text-white bg-red-600 shadow-red-900/40 translate-x-0";
+                toastIcon.className = "fa-solid fa-triangle-exclamation";
+            }
+
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
