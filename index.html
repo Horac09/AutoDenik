@@ -12,122 +12,8 @@
     <meta name="apple-mobile-web-app-title" content="AutoDeník">
     <meta name="theme-color" content="#0f172a">
     
-    <!-- Dynamic High-Contrast PWA Icon (512x512 Canvas) & Web Manifest -->
-    <script>
-        (function setupAppIcon() {
-            const size = 512;
-            const canvas = document.createElement('canvas');
-            canvas.width = size;
-            canvas.height = size;
-            const ctx = canvas.getContext('2d');
-
-            // 1. Tmavě modrý přechod přes celou plochu (bezpečné pro Android adaptive/maskable ořez)
-            const bgGrad = ctx.createLinearGradient(0, 0, size, size);
-            bgGrad.addColorStop(0, '#0f172a');
-            bgGrad.addColorStop(1, '#1d4ed8');
-            ctx.fillStyle = bgGrad;
-            ctx.fillRect(0, 0, size, size);
-
-            // Jemná azurová záře uprostřed
-            ctx.beginPath();
-            ctx.arc(256, 256, 155, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(56, 189, 248, 0.14)';
-            ctx.fill();
-
-            // 2. Kontrastní bílá silueta auta v bezpečné zóně uprostřed
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.lineWidth = 12;
-            ctx.strokeStyle = '#ffffff';
-
-            ctx.beginPath();
-            ctx.moveTo(146, 260);
-            ctx.lineTo(154, 234);
-            ctx.lineTo(192, 230);
-            ctx.lineTo(222, 194);
-            ctx.lineTo(294, 194);
-            ctx.lineTo(328, 230);
-            ctx.lineTo(364, 236);
-            ctx.quadraticCurveTo(374, 240, 374, 258);
-            ctx.lineTo(374, 272);
-            ctx.lineTo(348, 272);
-            ctx.moveTo(292, 272);
-            ctx.lineTo(220, 272);
-            ctx.moveTo(164, 272);
-            ctx.lineTo(146, 272);
-            ctx.closePath();
-            ctx.stroke();
-
-            // Okna kabiny
-            ctx.lineWidth = 8;
-            ctx.strokeStyle = '#bae6fd';
-            ctx.beginPath();
-            ctx.moveTo(228, 206);
-            ctx.lineTo(288, 206);
-            ctx.lineTo(312, 230);
-            ctx.lineTo(206, 230);
-            ctx.closePath();
-            ctx.stroke();
-
-            // 3. Kola
-            [192, 320].forEach(cx => {
-                ctx.beginPath();
-                ctx.arc(cx, 274, 24, 0, Math.PI * 2);
-                ctx.fillStyle = '#ffffff';
-                ctx.fill();
-
-                ctx.beginPath();
-                ctx.arc(cx, 274, 12, 0, Math.PI * 2);
-                ctx.fillStyle = '#0f172a';
-                ctx.fill();
-
-                ctx.beginPath();
-                ctx.arc(cx, 274, 5, 0, Math.PI * 2);
-                ctx.fillStyle = '#38bdf8';
-                ctx.fill();
-            });
-
-            // 4. Azurová linka pod vozem
-            ctx.lineWidth = 10;
-            ctx.strokeStyle = '#38bdf8';
-            ctx.beginPath();
-            ctx.moveTo(156, 316);
-            ctx.lineTo(356, 316);
-            ctx.stroke();
-
-            const iconUrl = canvas.toDataURL('image/png');
-
-            document.querySelectorAll('link[rel*="icon"], link[rel="manifest"]').forEach(el => el.remove());
-
-            const linkIcon = document.createElement('link');
-            linkIcon.rel = 'icon';
-            linkIcon.type = 'image/png';
-            linkIcon.href = iconUrl;
-            document.head.appendChild(linkIcon);
-
-            const appleIcon = document.createElement('link');
-            appleIcon.rel = 'apple-touch-icon';
-            appleIcon.href = iconUrl;
-            document.head.appendChild(appleIcon);
-
-            const manifest = {
-                name: 'AutoDeník',
-                short_name: 'AutoDeník',
-                start_url: window.location.href,
-                display: 'standalone',
-                background_color: '#0f172a',
-                theme_color: '#0f172a',
-                icons: [
-                    { src: iconUrl, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
-                ]
-            };
-            const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
-            const manifestLink = document.createElement('link');
-            manifestLink.rel = 'manifest';
-            manifestLink.href = URL.createObjectURL(manifestBlob);
-            document.head.appendChild(manifestLink);
-        })();
-    </script>
+    <!-- Inline PWA Web Manifest -->
+    <link rel="manifest" href="data:application/manifest+json;utf8,%7B%22name%22%3A%22AutoDenik%22%2C%22short_name%22%3A%22AutoDenik%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f172a%22%2C%22theme_color%22%3A%22%230f172a%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fcdn-icons-png.flaticon.com%2F512%2F3202%2F3202003.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -507,7 +393,6 @@
             <div class="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none">
                 <button onclick="filterServiceLogs('ALL')" class="svc-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-cyan-500 text-white whitespace-nowrap">Vše</button>
                 <button onclick="filterServiceLogs('Motorový olej')" class="svc-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap">Olej & Filtry</button>
-                <button onclick="filterServiceLogs('Pojištění a poplatky')" class="svc-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap">Pojištění a poplatky</button>
                 <button onclick="filterServiceLogs('Brzdy')" class="svc-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap">Brzdy</button>
                 <button onclick="filterServiceLogs('Pneumatiky')" class="svc-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap">Pneumatiky</button>
                 <button onclick="filterServiceLogs('STK / Emise')" class="svc-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap">STK / Emise</button>
@@ -623,7 +508,7 @@
             <!-- Detailed Cost Breakdown Table -->
             <div class="glass-panel p-4 rounded-2xl border border-slate-800 space-y-3">
                 <h3 class="text-xs font-bold text-white">Jednotkové náklady vozidla</h3>
-                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-xs">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
                     <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
                         <span class="text-slate-400 block mb-1">Palivo / km</span>
                         <span id="costFuelPerKm" class="text-base font-extrabold text-cyan-400">0.00 Kč</span>
@@ -637,10 +522,6 @@
                         <span id="costTiresPerKm" class="text-base font-extrabold text-amber-400">0.00 Kč</span>
                     </div>
                     <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-                        <span class="text-slate-400 block mb-1">Pojištění / km</span>
-                        <span id="costInsurancePerKm" class="text-base font-extrabold text-rose-400">0.00 Kč</span>
-                    </div>
-                    <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800 col-span-2 sm:col-span-1">
                         <span class="text-slate-400 block mb-1">Celkem / km</span>
                         <span id="costTotalPerKm" class="text-base font-extrabold text-emerald-400">0.00 Kč</span>
                     </div>
@@ -796,7 +677,6 @@
                         <label class="block font-semibold text-slate-300 mb-1">Kategorie</label>
                         <select id="serviceCategory" required class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none">
                             <option value="Motorový olej">Motorový olej & Filtry</option>
-                            <option value="Pojištění a poplatky">Pojištění a poplatky</option>
                             <option value="Brzdy">Brzdy</option>
                             <option value="Pneumatiky">Pneumatiky & Přezouvání</option>
                             <option value="STK / Emise">STK / Emise</option>
@@ -968,7 +848,6 @@
                     <label class="block font-semibold text-slate-300 mb-1">Kategorie</label>
                     <select id="reminderCategory" class="w-full bg-slate-800 text-white rounded-xl border border-slate-700 px-3 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
                         <option value="Motorový olej">Motorový olej & Filtry</option>
-                        <option value="Pojištění a poplatky">Pojištění a poplatky</option>
                         <option value="Brzdy">Brzdy</option>
                         <option value="Pneumatiky">Pneumatiky</option>
                         <option value="STK / Emise">STK / Emise</option>
@@ -1193,35 +1072,10 @@
 
     <!-- ================= JAVASCRIPT APPLICATION CORE ================= -->
     <script>
-        const DEFAULT_STORAGE_KEY = 'autodenik_app_data_v5';
-        let activeStorageKey = DEFAULT_STORAGE_KEY;
+        const STORAGE_KEY = 'autodenik_app_data_v5';
 
         // STANDARD SERVICE TEMPLATES LIBRARY
         const SERVICE_TEMPLATES = [
-            {
-                id: 'tpl_pov',
-                title: 'Povinné ručení',
-                category: 'Pojištění a poplatky',
-                intervalKm: null,
-                intervalMonths: 12,
-                description: 'Roční platba a obnova povinného ručení (kalendářní)'
-            },
-            {
-                id: 'tpl_hav',
-                title: 'Havarijní pojištění',
-                category: 'Pojištění a poplatky',
-                intervalKm: null,
-                intervalMonths: 12,
-                description: 'Roční obnova havarijního pojištění (kalendářní)'
-            },
-            {
-                id: 'tpl_vignette',
-                title: 'Roční dálniční známka',
-                category: 'Pojištění a poplatky',
-                intervalKm: null,
-                intervalMonths: 12,
-                description: 'Elektronická dálniční známka na 12 měsíců (kalendářní)'
-            },
             {
                 id: 'tpl_oil',
                 title: 'Výměna motorového oleje a filtru',
@@ -1322,190 +1176,14 @@
         let expenseCategoryChartInstance = null;
         let monthlyExpenseChartInstance = null;
 
-        // On App Load - Strictly preserves any existing user data in localStorage
+        // On App Load
         window.onload = function() {
-            const hasExistingData = loadFromLocalStorage();
+            loadFromLocalStorage();
 
-            // Only generate demo data on a completely fresh install with zero existing records
-            if (!hasExistingData && AppState.fuelLogs.length === 0 && AppState.serviceLogs.length === 0 && AppState.tireSets.length === 0 && AppState.reminders.length === 0) {
+            // Populate initial demo data if database is empty
+            if (!AppState.fuelLogs || AppState.fuelLogs.length === 0) {
                 generateDemoDataState();
             }
-
-            // Set current date in modal input fields
-            const todayStr = new Date().toISOString().split('T')[0];
-            if (document.getElementById('fuelDate')) document.getElementById('fuelDate').value = todayStr;
-            if (document.getElementById('serviceDate')) document.getElementById('serviceDate').value = todayStr;
-            if (document.getElementById('tireSwapDate')) document.getElementById('tireSwapDate').value = todayStr;
-
-            renderAll();
-        };
-
-        function saveToLocalStorage() {
-            localStorage.setItem(activeStorageKey, JSON.stringify(AppState));
-            if (activeStorageKey !== DEFAULT_STORAGE_KEY) {
-                localStorage.setItem(DEFAULT_STORAGE_KEY, JSON.stringify(AppState));
-            }
-        }
-
-        // Backward-compatible state normalizer & migrator (supports legacy localStorage keys and older JSON backups)
-        function normalizeAndMigrateState(raw) {
-            if (!raw || typeof raw !== 'object') return null;
-
-            const rawVehicles = Array.isArray(raw.vehicles) ? raw.vehicles : (Array.isArray(raw.cars) ? raw.cars : []);
-            const vehicles = rawVehicles.map((v, idx) => {
-                const initKm = Number(v.initialKm ?? v.startKm ?? 0) || 0;
-                const currKm = Number(v.currentKm ?? v.odometer ?? initKm) || initKm;
-                return {
-                    id: v.id || ('veh_' + idx + '_' + Date.now()),
-                    name: v.name || v.model || 'Moje vozidlo',
-                    plate: v.plate || v.spz || '',
-                    year: v.year ? Number(v.year) : '',
-                    initialKm: initKm,
-                    currentKm: currKm
-                };
-            });
-
-            if (vehicles.length === 0) {
-                vehicles.push({
-                    id: 'veh_default',
-                    name: 'Moje Auto',
-                    plate: '',
-                    year: new Date().getFullYear(),
-                    initialKm: 0,
-                    currentKm: 0
-                });
-            }
-
-            const defaultVehId = vehicles[0].id;
-            const requestedActiveId = raw.activeVehicleId || raw.activeCarId || raw.selectedVehicleId;
-            const activeVehicleId = vehicles.some(v => v.id === requestedActiveId) ? requestedActiveId : defaultVehId;
-
-            const rawFuel = Array.isArray(raw.fuelLogs) ? raw.fuelLogs : (Array.isArray(raw.refuels) ? raw.refuels : (Array.isArray(raw.fuel) ? raw.fuel : []));
-            const fuelLogs = rawFuel.map((f, idx) => ({
-                id: f.id || ('fuel_' + idx + '_' + Date.now()),
-                vehicleId: f.vehicleId || f.carId || defaultVehId,
-                date: f.date || new Date().toISOString().split('T')[0],
-                odometer: Number(f.odometer ?? f.km ?? 0) || 0,
-                liters: Number(f.liters ?? f.amount ?? 0) || 0,
-                totalPrice: Number(f.totalPrice ?? f.price ?? f.cost ?? 0) || 0,
-                isFullTank: f.isFullTank !== undefined ? Boolean(f.isFullTank) : (f.fullTank !== undefined ? Boolean(f.fullTank) : true),
-                station: f.station || f.note || ''
-            }));
-
-            const rawService = Array.isArray(raw.serviceLogs) ? raw.serviceLogs : (Array.isArray(raw.services) ? raw.services : []);
-            const serviceLogs = rawService.map((s, idx) => ({
-                id: s.id || ('svc_' + idx + '_' + Date.now()),
-                vehicleId: s.vehicleId || s.carId || defaultVehId,
-                date: s.date || new Date().toISOString().split('T')[0],
-                odometer: Number(s.odometer ?? s.km ?? 0) || 0,
-                category: s.category || 'Ostatní',
-                title: s.title || s.name || 'Servisní úkon',
-                cost: Number(s.cost ?? s.price ?? 0) || 0,
-                description: s.description || s.notes || s.note || ''
-            }));
-
-            const rawReminders = Array.isArray(raw.reminders) ? raw.reminders : (Array.isArray(raw.tasks) ? raw.tasks : []);
-            const reminders = rawReminders.map((r, idx) => ({
-                id: r.id || ('rem_' + idx + '_' + Date.now()),
-                vehicleId: r.vehicleId || r.carId || defaultVehId,
-                title: r.title || r.name || 'Servisní úkon',
-                category: r.category || 'Ostatní',
-                type: r.type || (r.targetOdometer && r.targetDate ? 'BOTH' : (r.targetDate ? 'DATE' : 'ODOMETER')),
-                targetOdometer: r.targetOdometer ? Number(r.targetOdometer) : null,
-                targetDate: r.targetDate || null,
-                recurringKm: r.recurringKm ? Number(r.recurringKm) : null,
-                recurringMonths: r.recurringMonths ? Number(r.recurringMonths) : null,
-                isCompleted: Boolean(r.isCompleted)
-            }));
-
-            const rawTireSets = Array.isArray(raw.tireSets) ? raw.tireSets : (Array.isArray(raw.tires) ? raw.tires : []);
-            const tireSets = rawTireSets.map((t, idx) => ({
-                id: t.id || ('tset_' + idx + '_' + Date.now()),
-                vehicleId: t.vehicleId || t.carId || defaultVehId,
-                customName: t.customName || t.name || 'Sada pneumatik',
-                type: t.type || 'LETNI',
-                brand: t.brand || '',
-                dimension: t.dimension || t.size || '',
-                dot: t.dot || '',
-                initialTreadMm: Number(t.initialTreadMm ?? 8.0) || 8.0,
-                currentTreadMm: Number(t.currentTreadMm ?? t.initialTreadMm ?? 8.0) || 8.0,
-                location: t.location || ''
-            }));
-
-            const rawTireSwaps = Array.isArray(raw.tireSwaps) ? raw.tireSwaps : (Array.isArray(raw.swaps) ? raw.swaps : []);
-            const tireSwaps = rawTireSwaps.map((sw, idx) => ({
-                id: sw.id || ('swap_' + idx + '_' + Date.now()),
-                vehicleId: sw.vehicleId || sw.carId || defaultVehId,
-                date: sw.date || new Date().toISOString().split('T')[0],
-                odometer: Number(sw.odometer ?? 0) || 0,
-                mountedSetId: sw.mountedSetId || '',
-                cost: Number(sw.cost ?? 0) || 0,
-                treadDepthMm: sw.treadDepthMm ? Number(sw.treadDepthMm) : null,
-                notes: sw.notes || ''
-            }));
-
-            return {
-                activeVehicleId,
-                vehicles,
-                fuelLogs,
-                serviceLogs,
-                reminders,
-                tireSets,
-                tireSwaps,
-                activeTab: raw.activeTab || 'dashboard',
-                theme: raw.theme || 'dark'
-            };
-        }
-
-        function loadFromLocalStorage() {
-            try {
-                const candidateKeys = [
-                    DEFAULT_STORAGE_KEY,
-                    'autodenik_app_data_v4',
-                    'autodenik_app_data_v3',
-                    'autodenik_app_data_v2',
-                    'autodenik_app_data_v1',
-                    'autodenik_app_data',
-                    'autodenik_data',
-                    'autoDenikData',
-                    'autodenik'
-                ];
-
-                // Scan all keys in localStorage so any legacy key is automatically detected
-                for (let i = 0; i < localStorage.length; i++) {
-                    const k = localStorage.key(i);
-                    if (k && !candidateKeys.includes(k)) {
-                        candidateKeys.push(k);
-                    }
-                }
-
-                for (const key of candidateKeys) {
-                    const rawStr = localStorage.getItem(key);
-                    if (!rawStr) continue;
-                    try {
-                        const parsed = JSON.parse(rawStr);
-                        if (parsed && typeof parsed === 'object' && (
-                            Array.isArray(parsed.vehicles) || Array.isArray(parsed.cars) ||
-                            Array.isArray(parsed.fuelLogs) || Array.isArray(parsed.refuels) ||
-                            Array.isArray(parsed.serviceLogs) || Array.isArray(parsed.services)
-                        )) {
-                            const migrated = normalizeAndMigrateState(parsed);
-                            if (migrated) {
-                                activeStorageKey = key;
-                                AppState = migrated;
-                                saveToLocalStorage();
-                                return true;
-                            }
-                        }
-                    } catch (parseErr) {
-                        // Ignore non-JSON keys in localStorage
-                    }
-                }
-            } catch (e) {
-                console.error("Chyba při čtení paměti:", e);
-            }
-            return false;
-        }
 
             // Set current date in modal input fields
             const todayStr = new Date().toISOString().split('T')[0];
@@ -1630,9 +1308,6 @@
             document.getElementById('costFuelPerKm').innerText = `${stats.fuelPerKm.toFixed(2)} Kč`;
             document.getElementById('costServicePerKm').innerText = `${stats.servicePerKm.toFixed(2)} Kč`;
             document.getElementById('costTiresPerKm').innerText = `${stats.tirePerKm.toFixed(2)} Kč`;
-            if (document.getElementById('costInsurancePerKm')) {
-                document.getElementById('costInsurancePerKm').innerText = `${stats.insurancePerKm.toFixed(2)} Kč`;
-            }
             document.getElementById('costTotalPerKm').innerText = `${stats.costPerKm.toFixed(2)} Kč`;
 
             if (AppState.activeTab === 'analytics') {
@@ -1659,22 +1334,18 @@
             container.innerHTML = SERVICE_TEMPLATES.map(tpl => {
                 const targetKm = tpl.intervalKm ? currentKm + tpl.intervalKm : null;
                 const targetDate = tpl.intervalMonths ? addMonthToDateStr(new Date().toISOString().split('T')[0], tpl.intervalMonths) : null;
-                const isInsurance = tpl.category === 'Pojištění a poplatky';
 
                 return `
-                    <div class="p-3 rounded-xl bg-slate-800/80 border ${isInsurance ? 'border-rose-500/30' : 'border-slate-700'} flex items-center justify-between gap-2">
+                    <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-between gap-2">
                         <div>
-                            <div class="flex items-center space-x-2">
-                                <span class="font-bold text-white">${tpl.title}</span>
-                                ${isInsurance ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">Pojištění / Poplatek</span>' : ''}
-                            </div>
+                            <div class="font-bold text-white">${tpl.title}</div>
                             <div class="text-[11px] text-slate-400 mt-0.5">${tpl.description}</div>
                             <div class="text-[10px] text-cyan-400 mt-1 font-semibold">
-                                ${targetKm ? `Příští: ${formatNum(targetKm)} km` : 'Kalendářní termín'}
+                                ${targetKm ? `Příští: ${formatNum(targetKm)} km` : ''}
                                 ${targetDate ? ` • Termín: ${formatDate(targetDate)}` : ''}
                             </div>
                         </div>
-                        <button onclick="addReminderFromTemplate('${tpl.id}')" class="px-3 py-1.5 rounded-xl ${isInsurance ? 'bg-rose-600 hover:bg-rose-500' : 'bg-indigo-600 hover:bg-indigo-500'} text-white font-bold text-xs shadow transition whitespace-nowrap">
+                        <button onclick="addReminderFromTemplate('${tpl.id}')" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow transition whitespace-nowrap">
                             + Přidat
                         </button>
                     </div>
@@ -1734,18 +1405,17 @@
 
         function calculateVehicleStats(vehicleId) {
             const currentCar = AppState.vehicles.find(v => v.id === vehicleId);
-            if (!currentCar) return { totalSpent: 0, trackedKm: 0, avgConsumption: 0, costPerKm: 0, fuelPerKm: 0, servicePerKm: 0, tirePerKm: 0, insurancePerKm: 0 };
+            if (!currentCar) return { totalSpent: 0, trackedKm: 0, avgConsumption: 0, costPerKm: 0, fuelPerKm: 0, servicePerKm: 0, tirePerKm: 0 };
 
             const vFuel = AppState.fuelLogs.filter(f => f.vehicleId === vehicleId);
             const vService = AppState.serviceLogs.filter(s => s.vehicleId === vehicleId);
 
             const fuelTotal = vFuel.reduce((sum, item) => sum + (Number(item.totalPrice) || 0), 0);
             
-            // Total service divided into general service, tires, and insurance/fees
+            // Total service divided into general service and tires
             const totalServiceCost = vService.reduce((sum, item) => sum + (Number(item.cost) || 0), 0);
             const tireServiceCost = vService.filter(s => s.category === 'Pneumatiky').reduce((sum, item) => sum + (Number(item.cost) || 0), 0);
-            const insuranceServiceCost = vService.filter(s => s.category === 'Pojištění a poplatky').reduce((sum, item) => sum + (Number(item.cost) || 0), 0);
-            const generalServiceCost = totalServiceCost - tireServiceCost - insuranceServiceCost;
+            const generalServiceCost = totalServiceCost - tireServiceCost;
 
             const totalSpent = fuelTotal + totalServiceCost;
 
@@ -1780,9 +1450,8 @@
             const fuelPerKm = trackedKm > 0 ? fuelTotal / trackedKm : 0;
             const servicePerKm = trackedKm > 0 ? generalServiceCost / trackedKm : 0;
             const tirePerKm = trackedKm > 0 ? tireServiceCost / trackedKm : 0;
-            const insurancePerKm = trackedKm > 0 ? insuranceServiceCost / trackedKm : 0;
 
-            return { totalSpent, fuelTotal, serviceTotal: totalServiceCost, generalServiceCost, tireServiceCost, insuranceServiceCost, trackedKm, avgConsumption, costPerKm, fuelPerKm, servicePerKm, tirePerKm, insurancePerKm };
+            return { totalSpent, fuelTotal, serviceTotal: totalServiceCost, generalServiceCost, tireServiceCost, trackedKm, avgConsumption, costPerKm, fuelPerKm, servicePerKm, tirePerKm };
         }
 
         // Calculate mileage accumulated on each tire set from swap history
@@ -1836,81 +1505,40 @@
                 let progress = 0;
                 let subtext = '';
 
-                const hasOdo = (rem.type === 'ODOMETER' || rem.type === 'BOTH') && Number(rem.targetOdometer) > 0;
-                const hasDate = (rem.type === 'DATE' || rem.type === 'BOTH') && Boolean(rem.targetDate);
-
-                let odoUrgency = -1;
-                let dateUrgency = -1;
-                let odoBadge = '';
-                let dateBadge = '';
-
-                if (hasOdo) {
-                    const remainingKm = Number(rem.targetOdometer) - car.currentKm;
+                if (rem.type === 'ODOMETER' || (rem.type === 'BOTH' && rem.targetOdometer)) {
+                    const remainingKm = rem.targetOdometer - car.currentKm;
                     if (remainingKm <= 0) {
-                        odoBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30">Překročeno (${formatNum(Math.abs(remainingKm))} km)</span>`;
-                        odoUrgency = 100;
+                        badge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30">Překročeno (${formatNum(Math.abs(remainingKm))} km)</span>`;
+                        progress = 100;
                     } else if (remainingKm <= 1000) {
-                        odoBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">Zbývá ${formatNum(remainingKm)} km</span>`;
-                        odoUrgency = 90;
+                        badge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">Brzy (zbývá ${formatNum(remainingKm)} km)</span>`;
+                        progress = 90;
                     } else {
-                        odoBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Zbývá ${formatNum(remainingKm)} km</span>`;
-                        const intervalSpan = Number(rem.recurringKm) || 15000;
-                        odoUrgency = Math.min(95, Math.max(10, ((intervalSpan - remainingKm) / intervalSpan) * 100));
+                        badge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Zbývá ${formatNum(remainingKm)} km</span>`;
+                        progress = Math.min(100, Math.max(10, (car.currentKm / rem.targetOdometer) * 100));
                     }
-                }
-
-                if (hasDate) {
-                    const targetDate = new Date(rem.targetDate);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    targetDate.setHours(0, 0, 0, 0);
-                    const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
-
-                    if (diffDays < 0) {
-                        dateBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30">Expirovalo (${Math.abs(diffDays)} dní)</span>`;
-                        dateUrgency = 100;
-                    } else if (diffDays === 0) {
-                        dateBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30">Termín dnes!</span>`;
-                        dateUrgency = 100;
-                    } else if (diffDays <= 30) {
-                        dateBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">Zbývá ${diffDays} dní</span>`;
-                        dateUrgency = 88;
-                    } else {
-                        dateBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Zbývá ${diffDays} dní</span>`;
-                        const totalPeriodDays = (Number(rem.recurringMonths) || 12) * 30;
-                        dateUrgency = Math.min(92, Math.max(8, ((totalPeriodDays - diffDays) / totalPeriodDays) * 100));
-                    }
-                }
-
-                if (hasOdo && hasDate) {
-                    badge = dateUrgency >= odoUrgency ? dateBadge : odoBadge;
-                    progress = Math.max(odoUrgency, dateUrgency);
-                    subtext = `Cíl: ${formatNum(rem.targetOdometer)} km • Termín: ${formatDate(rem.targetDate)}`;
-                } else if (hasDate) {
-                    badge = dateBadge;
-                    progress = dateUrgency;
-                    subtext = `Termín platnosti: ${formatDate(rem.targetDate)}`;
-                } else if (hasOdo) {
-                    badge = odoBadge;
-                    progress = odoUrgency;
                     subtext = `Cíl: ${formatNum(rem.targetOdometer)} km`;
-                } else {
-                    badge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-700 text-slate-300">Naplánováno</span>`;
-                    progress = 20;
-                    subtext = rem.category || 'Servisní úkon';
-                }
+                } else if (rem.type === 'DATE') {
+                    const targetDate = new Date(rem.targetDate);
+                    const diffDays = Math.ceil((targetDate - new Date()) / (1000 * 60 * 60 * 24));
 
-                const catBadge = rem.category === 'Pojištění a poplatky'
-                    ? `<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30 ml-1.5">Pojištění</span>`
-                    : '';
+                    if (diffDays <= 0) {
+                        badge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30">Expirovalo (${Math.abs(diffDays)} dní)</span>`;
+                        progress = 100;
+                    } else if (diffDays <= 30) {
+                        badge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">Zbývá ${diffDays} dní</span>`;
+                        progress = 85;
+                    } else {
+                        badge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Termín: ${formatDate(rem.targetDate)}</span>`;
+                        progress = 40;
+                    }
+                    subtext = `Termín: ${formatDate(rem.targetDate)}`;
+                }
 
                 return `
                     <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5">
-                        <div class="flex items-center justify-between gap-2">
-                            <div class="flex items-center flex-wrap">
-                                <span class="text-xs font-bold text-white">${rem.title}</span>
-                                ${catBadge}
-                            </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-white">${rem.title}</span>
                             ${badge}
                         </div>
                         <div class="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
@@ -1961,132 +1589,132 @@
                     <span class="text-slate-400">Pneumatika:</span>
                     <span class="font-bold text-white">${activeSet.brand} ${activeSet.dimension}</span>
                 </div>
-        function getServiceCategoryStyle(category) {
-            switch (category) {
-                case 'Pojištění a poplatky':
-                    return {
-                        iconWrap: 'bg-rose-500/15 text-rose-400',
-                        icon: 'fa-shield-halved',
-                        badge: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
-                        priceText: 'text-rose-400'
-                    };
-                case 'Pneumatiky':
-                    return {
-                        iconWrap: 'bg-amber-500/10 text-amber-400',
-                        icon: 'fa-compact-disc',
-                        badge: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-                        priceText: 'text-amber-400'
-                    };
-                case 'STK / Emise':
-                    return {
-                        iconWrap: 'bg-emerald-500/10 text-emerald-400',
-                        icon: 'fa-clipboard-check',
-                        badge: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-                        priceText: 'text-emerald-400'
-                    };
-                case 'Brzdy':
-                    return {
-                        iconWrap: 'bg-orange-500/10 text-orange-400',
-                        icon: 'fa-circle-dot',
-                        badge: 'bg-orange-500/15 text-orange-300 border-orange-500/30',
-                        priceText: 'text-orange-400'
-                    };
-                default:
-                    return {
-                        iconWrap: 'bg-indigo-500/10 text-indigo-400',
-                        icon: 'fa-wrench',
-                        badge: 'bg-slate-800 text-slate-400 border-slate-700',
-                        priceText: 'text-indigo-400'
-                    };
-            }
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-400">DOT (Týden/Rok):</span>
+                    <span class="font-mono font-bold text-amber-400">${activeSet.dot || 'N/A'}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-400">Ujeto na této sadě:</span>
+                    <span class="font-extrabold text-cyan-400">${formatNum(activeSet.accumulatedKm)} km</span>
+                </div>
+                <div class="flex items-center justify-between pt-1">
+                    <span class="text-slate-400">Hloubka vzorku:</span>
+                    <span class="font-extrabold ${isNearLimit ? 'text-red-400' : 'text-emerald-400'}">${currentTread} mm (min ${legalLimit} mm)</span>
+                </div>
+            `;
         }
 
-        function renderServiceLogs(car) {
-            const container = document.getElementById('serviceLogsContainer');
+        function renderDashboardActivity(car) {
+            const container = document.getElementById('dashRecentActivity');
             if (!container) return;
 
-            let logs = AppState.serviceLogs.filter(s => s.vehicleId === car.id);
-            if (activeServiceFilter !== 'ALL') {
-                logs = logs.filter(s => s.category === activeServiceFilter);
-            }
-            logs.sort((a, b) => new Date(b.date) - new Date(a.date));
+            const fuelEvents = AppState.fuelLogs.filter(f => f.vehicleId === car.id).map(f => ({ ...f, eventType: 'FUEL', dateObj: new Date(f.date) }));
+            const serviceEvents = AppState.serviceLogs.filter(s => s.vehicleId === car.id).map(s => ({ ...s, eventType: 'SERVICE', dateObj: new Date(s.date) }));
+            const tireEvents = AppState.tireSwaps.filter(t => t.vehicleId === car.id).map(t => ({ ...t, eventType: 'TIRE', dateObj: new Date(t.date) }));
 
-            if (logs.length === 0) {
-                container.innerHTML = `<div class="text-center py-8 text-slate-500 text-xs">Žádné servisní úkony v této kategorii.</div>`;
+            const allEvents = [...fuelEvents, ...serviceEvents, ...tireEvents].sort((a, b) => b.dateObj - a.dateObj).slice(0, 5);
+
+            if (allEvents.length === 0) {
+                container.innerHTML = `<div class="text-xs text-slate-500 text-center py-4">Zatím bez aktivit.</div>`;
                 return;
             }
 
-            container.innerHTML = logs.map(s => {
-                const st = getServiceCategoryStyle(s.category);
-                return `
-                    <div class="glass-panel p-4 rounded-2xl border border-slate-800 space-y-2">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-9 h-9 rounded-xl ${st.iconWrap} flex items-center justify-center">
-                                    <i class="fa-solid ${st.icon} text-sm"></i>
+            container.innerHTML = allEvents.map(ev => {
+                if (ev.eventType === 'FUEL') {
+                    return `
+                        <div class="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-slate-800/80">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-6 h-6 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-[10px]">
+                                    <i class="fa-solid fa-gas-pump"></i>
                                 </div>
                                 <div>
-                                    <div class="flex items-center flex-wrap gap-1.5">
-                                        <h4 class="text-xs font-bold text-white">${s.title}</h4>
-                                        <span class="px-1.5 py-0.5 rounded text-[9px] font-semibold border ${st.badge}">${s.category || 'Servis'}</span>
-                                    </div>
-                                    <p class="text-[10px] text-slate-400">${formatDate(s.date)} • ${formatNum(s.odometer)} km</p>
+                                    <div class="font-bold text-white">Tankování ${ev.liters} L</div>
+                                    <div class="text-[10px] text-slate-400">${formatDate(ev.date)} • ${formatNum(ev.odometer)} km</div>
                                 </div>
                             </div>
-                            <div class="flex items-center space-x-3">
-                                <span class="text-xs font-extrabold ${st.priceText}">${formatNum(s.cost)} Kč</span>
-                                <button onclick="deleteServiceLog('${s.id}')" class="text-slate-500 hover:text-red-400 text-xs">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </div>
+                            <span class="font-bold text-cyan-400">${formatNum(ev.totalPrice)} Kč</span>
                         </div>
-                        ${s.description ? `<p class="text-xs text-slate-300 bg-slate-900/50 p-2 rounded-lg border border-slate-800/80">${s.description}</p>` : ''}
-                    </div>
-                `;
+                    `;
+                } else if (ev.eventType === 'SERVICE') {
+                    return `
+                        <div class="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-slate-800/80">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-[10px]">
+                                    <i class="fa-solid fa-wrench"></i>
+                                </div>
+                                <div>
+                                    <div class="font-bold text-white">${ev.title}</div>
+                                    <div class="text-[10px] text-slate-400">${formatDate(ev.date)} • ${formatNum(ev.odometer)} km</div>
+                                </div>
+                            </div>
+                            <span class="font-bold text-indigo-400">${formatNum(ev.cost)} Kč</span>
+                        </div>
+                    `;
+                } else {
+                    const setObj = AppState.tireSets.find(s => s.id === ev.mountedSetId);
+                    return `
+                        <div class="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-slate-800/80">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-6 h-6 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center text-[10px]">
+                                    <i class="fa-solid fa-compact-disc"></i>
+                                </div>
+                                <div>
+                                    <div class="font-bold text-white">Obuto: ${setObj ? setObj.customName : 'Sada'}</div>
+                                    <div class="text-[10px] text-slate-400">${formatDate(ev.date)} • ${formatNum(ev.odometer)} km</div>
+                                </div>
+                            </div>
+                            <span class="text-[11px] font-bold text-amber-400">${ev.cost ? formatNum(ev.cost) + ' Kč' : (ev.treadDepthMm ? ev.treadDepthMm + ' mm' : 'OK')}</span>
+                        </div>
+                    `;
+                }
             }).join('');
         }
 
-        function renderServiceReminders(car) {
-            const container = document.getElementById('serviceRemindersContainer');
+        function renderFuelLogs(car) {
+            const container = document.getElementById('fuelLogsContainer');
             if (!container) return;
 
-            const carReminders = AppState.reminders.filter(r => r.vehicleId === car.id && !r.isCompleted);
+            const logs = AppState.fuelLogs.filter(f => f.vehicleId === car.id).sort((a, b) => new Date(b.date) - new Date(a.date));
 
-            if (carReminders.length === 0) {
-                container.innerHTML = `<div class="col-span-2 text-center py-2 text-slate-500 text-xs">Bez plánovaných intervalů.</div>`;
+            const totalLiters = logs.reduce((sum, item) => sum + (Number(item.liters) || 0), 0);
+            const totalCost = logs.reduce((sum, item) => sum + (Number(item.totalPrice) || 0), 0);
+            const avgPricePerL = totalLiters > 0 ? totalCost / totalLiters : 0;
+
+            document.getElementById('fuelTotalLiters').innerText = `${totalLiters.toFixed(1)} L`;
+            document.getElementById('fuelTotalCost').innerText = `${formatNum(totalCost)} Kč`;
+            document.getElementById('fuelAvgPricePerLiter').innerText = `${avgPricePerL.toFixed(2)} Kč`;
+
+            if (logs.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-slate-500 text-xs">Žádné záznamy o tankování.</div>`;
                 return;
             }
 
-            container.innerHTML = carReminders.map(rem => {
-                const hasOdo = Number(rem.targetOdometer) > 0;
-                const hasDate = Boolean(rem.targetDate);
-                let infoLine = '';
-                if (hasOdo && hasDate) {
-                    infoLine = `Cíl: ${formatNum(rem.targetOdometer)} km • ${formatDate(rem.targetDate)}`;
-                } else if (hasDate) {
-                    const targetDate = new Date(rem.targetDate);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    targetDate.setHours(0, 0, 0, 0);
-                    const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
-                    const daysLabel = diffDays < 0 ? `expirováno ${Math.abs(diffDays)} d.` : `zbývá ${diffDays} dní`;
-                    infoLine = `Termín: ${formatDate(rem.targetDate)} (${daysLabel})`;
-                } else if (hasOdo) {
-                    infoLine = `Cíl: ${formatNum(rem.targetOdometer)} km`;
-                }
-
+            container.innerHTML = logs.map(f => {
+                const unitPrice = f.liters > 0 ? (f.totalPrice / f.liters).toFixed(2) : 0;
                 return `
-                    <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between text-xs">
-                        <div>
-                            <div class="font-bold text-white">${rem.title}</div>
-                            <div class="text-[10px] text-slate-400 mt-0.5">${infoLine}</div>
+                    <div class="glass-panel p-3.5 rounded-2xl border border-slate-800 flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-9 h-9 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center font-bold">
+                                <i class="fa-solid fa-gas-pump text-sm"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs font-bold text-white">${formatDate(f.date)}</span>
+                                    ${f.isFullTank ? '<span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-400">Plná</span>' : ''}
+                                </div>
+                                <div class="text-[11px] text-slate-400">
+                                    ${formatNum(f.odometer)} km ${f.station ? '• ' + f.station : ''}
+                                </div>
+                            </div>
                         </div>
-                        <div class="flex items-center space-x-1.5">
-                            <button onclick="deleteReminder('${rem.id}')" class="text-slate-500 hover:text-red-400 text-xs p-1">
+
+                        <div class="flex items-center space-x-4">
+                            <div class="text-right">
+                                <div class="text-xs font-extrabold text-white">${formatNum(f.totalPrice)} Kč</div>
+                                <div class="text-[10px] text-slate-400">${f.liters} L (${unitPrice} Kč/L)</div>
+                            </div>
+                            <button onclick="deleteFuelLog('${f.id}')" class="text-slate-500 hover:text-red-400 text-xs">
                                 <i class="fa-solid fa-trash"></i>
-                            </button>
-                            <button onclick="promptCompleteReminder('${rem.id}')" class="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[11px] font-bold border border-emerald-500/30 transition">
-                                Dokončit
                             </button>
                         </div>
                     </div>
@@ -2317,10 +1945,10 @@
                 expenseCategoryChartInstance = new Chart(ctxCat, {
                     type: 'doughnut',
                     data: {
-                        labels: ['Palivo (Kč)', 'Servis (Kč)', 'Pneumatiky (Kč)', 'Pojištění a poplatky (Kč)'],
+                        labels: ['Palivo (Kč)', 'Servis (Kč)', 'Pneumatiky (Kč)'],
                         datasets: [{
-                            data: [stats.fuelTotal, stats.generalServiceCost, stats.tireServiceCost, stats.insuranceServiceCost],
-                            backgroundColor: ['#06b6d4', '#6366f1', '#f59e0b', '#f43f5e'],
+                            data: [stats.fuelTotal, stats.generalServiceCost, stats.tireServiceCost],
+                            backgroundColor: ['#06b6d4', '#6366f1', '#f59e0b'],
                             borderColor: '#1e293b',
                             borderWidth: 2
                         }]
@@ -2609,16 +2237,16 @@
             document.getElementById('completeReminderOdometer').value = car.currentKm;
             document.getElementById('completeReminderCost').value = 0;
             document.getElementById('completeReminderNotes').value = '';
-            // Set default auto-renew parameters (preserves date-only reminders without adding fake km)
+
+            // Set default auto-renew parameters
             const autoRenewCheck = document.getElementById('completeAutoRenew');
             if (autoRenewCheck) autoRenewCheck.checked = true;
 
             const kmInput = document.getElementById('renewIntervalKm');
             const monthsInput = document.getElementById('renewIntervalMonths');
 
-            const isDateOnly = !rem.recurringKm && !rem.targetOdometer;
-            if (kmInput) kmInput.value = isDateOnly ? '' : (rem.recurringKm || 15000);
-            if (monthsInput) monthsInput.value = rem.recurringMonths !== undefined && rem.recurringMonths !== null ? rem.recurringMonths : 12;
+            if (kmInput) kmInput.value = rem.recurringKm || 15000;
+            if (monthsInput) monthsInput.value = rem.recurringMonths || 12;
 
             toggleAutoRenewFields();
             openModal('completeReminderModal');
@@ -2833,9 +2461,8 @@
             reader.onload = function(event) {
                 try {
                     const parsed = JSON.parse(event.target.result);
-                    const migrated = normalizeAndMigrateState(parsed);
-                    if (migrated && migrated.vehicles) {
-                        AppState = migrated;
+                    if (parsed && parsed.vehicles) {
+                        AppState = parsed;
                         saveToLocalStorage();
                         closeModal('importExportModal');
                         renderAll();
