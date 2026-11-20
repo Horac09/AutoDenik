@@ -12,96 +12,126 @@
     <meta name="apple-mobile-web-app-title" content="AutoDeník">
     <meta name="theme-color" content="#0f172a">
 
-    <!-- Static Data-URI Web Manifest for Android WebAPK (avoids blob: URL fallback to Android robot) -->
-    <link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name":"AutoDeník","short_name":"AutoDeník","start_url":".","display":"standalone","background_color":"#0f172a","theme_color":"#0f172a","icons":[{"src":"data:image/svg+xml;utf8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27512%27 height=%27512%27 viewBox=%270 0 512 512%27%3E%3Cdefs%3E%3ClinearGradient id=%27g%27 x1=%270%27 y1=%270%27 x2=%271%27 y2=%271%27%3E%3Cstop offset=%270%25%27 stop-color=%27%230f172a%27/%3E%3Cstop offset=%27100%25%27 stop-color=%27%231d4ed8%27/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%27512%27 height=%27512%27 fill=%27url(%23g)%27/%3E%3Ccircle cx=%27256%27 cy=%27256%27 r=%27155%27 fill=%27%2338bdf8%27 fill-opacity=%270.14%27/%3E%3Cpath d=%27M146 260 L154 234 L192 230 L222 194 L294 194 L328 230 L364 236 Q374 240 374 258 L374 272 L348 272 M292 272 L220 272 M164 272 L146 272 Z%27 fill=%27none%27 stroke=%27%23ffffff%27 stroke-width=%2714%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M228 206 L288 206 L312 230 L206 230 Z%27 fill=%27none%27 stroke=%27%23bae6fd%27 stroke-width=%279%27 stroke-linejoin=%27round%27/%3E%3Ccircle cx=%27192%27 cy=%27274%27 r=%2724%27 fill=%27%23ffffff%27/%3E%3Ccircle cx=%27192%27 cy=%27274%27 r=%2711%27 fill=%27%230f172a%27/%3E%3Ccircle cx=%27320%27 cy=%27274%27 r=%2724%27 fill=%27%23ffffff%27/%3E%3Ccircle cx=%27320%27 cy=%27274%27 r=%2711%27 fill=%27%230f172a%27/%3E%3Cline x1=%27156%27 y1=%27318%27 x2=%27356%27 y2=%27318%27 stroke=%27%2338bdf8%27 stroke-width=%2712%27 stroke-linecap=%27round%27/%3E%3C/svg%3E","sizes":"512x512","type":"image/svg+xml","purpose":"any"}]}'>
-
-    <!-- Browser Tab Favicon & Apple Touch Icon (512x512 PNG via Canvas) -->
+    <!-- PWA Manifest (Data-URI Base64 with PNG icons & explicit same-origin start_url) -->
     <script>
-        (function setupFaviconAndAppleIcon() {
+        (function setupPwaManifestAndIcons() {
             try {
-                const size = 512;
-                const canvas = document.createElement('canvas');
-                canvas.width = size;
-                canvas.height = size;
-                const ctx = canvas.getContext('2d');
+                function renderCarIconPng(size) {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = size;
+                    canvas.height = size;
+                    const ctx = canvas.getContext('2d');
+                    const s = size / 512;
 
-                const bgGrad = ctx.createLinearGradient(0, 0, size, size);
-                bgGrad.addColorStop(0, '#0f172a');
-                bgGrad.addColorStop(1, '#1d4ed8');
-                ctx.fillStyle = bgGrad;
-                ctx.fillRect(0, 0, size, size);
-
-                ctx.beginPath();
-                ctx.arc(256, 256, 155, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(56, 189, 248, 0.14)';
-                ctx.fill();
-
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-                ctx.lineWidth = 14;
-                ctx.strokeStyle = '#ffffff';
-
-                ctx.beginPath();
-                ctx.moveTo(146, 260);
-                ctx.lineTo(154, 234);
-                ctx.lineTo(192, 230);
-                ctx.lineTo(222, 194);
-                ctx.lineTo(294, 194);
-                ctx.lineTo(328, 230);
-                ctx.lineTo(364, 236);
-                ctx.quadraticCurveTo(374, 240, 374, 258);
-                ctx.lineTo(374, 272);
-                ctx.lineTo(348, 272);
-                ctx.moveTo(292, 272);
-                ctx.lineTo(220, 272);
-                ctx.moveTo(164, 272);
-                ctx.lineTo(146, 272);
-                ctx.closePath();
-                ctx.stroke();
-
-                ctx.lineWidth = 9;
-                ctx.strokeStyle = '#bae6fd';
-                ctx.beginPath();
-                ctx.moveTo(228, 206);
-                ctx.lineTo(288, 206);
-                ctx.lineTo(312, 230);
-                ctx.lineTo(206, 230);
-                ctx.closePath();
-                ctx.stroke();
-
-                [192, 320].forEach(function (cx) {
-                    ctx.beginPath();
-                    ctx.arc(cx, 274, 24, 0, Math.PI * 2);
-                    ctx.fillStyle = '#ffffff';
-                    ctx.fill();
+                    const bgGrad = ctx.createLinearGradient(0, 0, size, size);
+                    bgGrad.addColorStop(0, '#0f172a');
+                    bgGrad.addColorStop(1, '#1d4ed8');
+                    ctx.fillStyle = bgGrad;
+                    ctx.fillRect(0, 0, size, size);
 
                     ctx.beginPath();
-                    ctx.arc(cx, 274, 11, 0, Math.PI * 2);
-                    ctx.fillStyle = '#0f172a';
+                    ctx.arc(256 * s, 256 * s, 155 * s, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(56, 189, 248, 0.14)';
                     ctx.fill();
-                });
 
-                ctx.lineWidth = 12;
-                ctx.strokeStyle = '#38bdf8';
-                ctx.beginPath();
-                ctx.moveTo(156, 318);
-                ctx.lineTo(356, 318);
-                ctx.stroke();
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    ctx.lineWidth = 14 * s;
+                    ctx.strokeStyle = '#ffffff';
 
-                const iconUrl = canvas.toDataURL('image/png');
+                    ctx.beginPath();
+                    ctx.moveTo(146 * s, 260 * s);
+                    ctx.lineTo(154 * s, 234 * s);
+                    ctx.lineTo(192 * s, 230 * s);
+                    ctx.lineTo(222 * s, 194 * s);
+                    ctx.lineTo(294 * s, 194 * s);
+                    ctx.lineTo(328 * s, 230 * s);
+                    ctx.lineTo(364 * s, 236 * s);
+                    ctx.quadraticCurveTo(374 * s, 240 * s, 374 * s, 258 * s);
+                    ctx.lineTo(374 * s, 272 * s);
+                    ctx.lineTo(348 * s, 272 * s);
+                    ctx.moveTo(292 * s, 272 * s);
+                    ctx.lineTo(220 * s, 272 * s);
+                    ctx.moveTo(164 * s, 272 * s);
+                    ctx.lineTo(146 * s, 272 * s);
+                    ctx.closePath();
+                    ctx.stroke();
+
+                    ctx.lineWidth = 9 * s;
+                    ctx.strokeStyle = '#bae6fd';
+                    ctx.beginPath();
+                    ctx.moveTo(228 * s, 206 * s);
+                    ctx.lineTo(288 * s, 206 * s);
+                    ctx.lineTo(312 * s, 230 * s);
+                    ctx.lineTo(206 * s, 230 * s);
+                    ctx.closePath();
+                    ctx.stroke();
+
+                    [192, 320].forEach(function (cx) {
+                        ctx.beginPath();
+                        ctx.arc(cx * s, 274 * s, 24 * s, 0, Math.PI * 2);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fill();
+
+                        ctx.beginPath();
+                        ctx.arc(cx * s, 274 * s, 11 * s, 0, Math.PI * 2);
+                        ctx.fillStyle = '#0f172a';
+                        ctx.fill();
+                    });
+
+                    ctx.lineWidth = 12 * s;
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.beginPath();
+                    ctx.moveTo(156 * s, 318 * s);
+                    ctx.lineTo(356 * s, 318 * s);
+                    ctx.stroke();
+
+                    return canvas.toDataURL('image/png');
+                }
+
+                const icon192 = renderCarIconPng(192);
+                const icon512 = renderCarIconPng(512);
 
                 const linkIcon = document.createElement('link');
                 linkIcon.rel = 'icon';
                 linkIcon.type = 'image/png';
-                linkIcon.href = iconUrl;
+                linkIcon.href = icon512;
                 document.head.appendChild(linkIcon);
 
                 const appleIcon = document.createElement('link');
                 appleIcon.rel = 'apple-touch-icon';
-                appleIcon.href = iconUrl;
+                appleIcon.href = icon512;
                 document.head.appendChild(appleIcon);
+
+                const pageUrl = window.location.href.split('#')[0];
+                const scopeUrl = new URL('./', pageUrl).href;
+
+                const manifest = {
+                    id: window.location.pathname || '/',
+                    name: 'AutoDeník - Správa Vozidla',
+                    short_name: 'AutoDeník',
+                    start_url: pageUrl,
+                    scope: scopeUrl,
+                    display: 'standalone',
+                    orientation: 'portrait-primary',
+                    background_color: '#0f172a',
+                    theme_color: '#0f172a',
+                    icons: [
+                        { src: icon192, sizes: '192x192', type: 'image/png', purpose: 'any' },
+                        { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'any' },
+                        { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+                    ]
+                };
+
+                const jsonStr = JSON.stringify(manifest);
+                const base64Manifest = btoa(unescape(encodeURIComponent(jsonStr)));
+
+                const manifestLink = document.createElement('link');
+                manifestLink.rel = 'manifest';
+                manifestLink.href = 'data:application/manifest+json;base64,' + base64Manifest;
+                document.head.appendChild(manifestLink);
             } catch (err) {
-                console.warn('Favicon nelze inicializovat:', err);
+                console.warn('PWA manifest nelze inicializovat:', err);
             }
         })();
     </script>
